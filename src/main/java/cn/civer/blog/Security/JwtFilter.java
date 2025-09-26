@@ -8,6 +8,7 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
 import java.io.IOException;
@@ -30,8 +31,8 @@ public class JwtFilter implements Filter {
         log.info("请求的url:{}", requestURL);
 
         //  TODO 2.判断请求url中是否包含login，如果包含，说明是登录操作，放行
-        if (requestURL.contains("/login")){
-            log.info("登录操作，放行...");
+        if (requestURL.contains("/login")||requestURL.contains("/register")){
+            log.info("登录/注册操作，放行...");
             filterChain.doFilter(request, response);
             // 登录操作不需要执行下面的逻辑，直接结束此过滤器即可
             return;

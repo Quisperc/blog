@@ -1,23 +1,27 @@
 package cn.civer.blog.Security;
 
+import cn.civer.blog.Properties.JwtProperties;
 import io.jsonwebtoken.*;
-import org.springframework.beans.factory.annotation.Value;
+import io.jsonwebtoken.security.Keys;
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.math.BigInteger;
 import java.util.Date;
 import java.util.Map;
 
+@Slf4j
 @Component
+@Data
+// @ConfigurationProperties(prefix = "jwt")
 public class JwtTokenProvider {
-
-    // 密钥
-    @Value("${jwt.secret}")
-    private static String secret;
-
-    // 过期时间
-    @Value("${jwt.expiration-ms}")
-    private static long expirationMs;
-
+    private static JwtProperties jwtProperties;
+    @Autowired
+    public void setJwtProperties(JwtProperties jwtProperties) {
+        JwtTokenProvider.jwtProperties = jwtProperties; // 注入时写入静态字段
+    }
     /**
      * 生成JwtToken
      * @param userID 用户ID
@@ -25,10 +29,10 @@ public class JwtTokenProvider {
      * @param Claims 验证声明
      * @return 生成的token
      */
-    public static String generateToken(Long userID, String username, Map<String, Object> Claims){
+    public static String generateToken(BigInteger userID, String username, Map<String, Object> Claims){
         JwtBuilder builder = Jwts.builder()
-                .signWith(SignatureAlgorithm.HS256, secret) // 签名
-                .setExpiration(new Date(System.currentTimeMillis() + expirationMs)) // 过期时间
+                .signWith(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()), SignatureAlgorithm.HS256) // 签名
+                .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs())) // 过期时间
                 .claim("username",username) // 声明username
                 .setSubject(String.valueOf(userID))  // 主题：用户ID
                 .setIssuedAt(new Date());            // 签发时间：现在
@@ -43,7 +47,7 @@ public class JwtTokenProvider {
      */
     public static Claims parserToken(String Token){
         return Jwts.parser()
-                    .setSigningKey(secret)  // 用secret解密
+                    .setSigningKey(jwtProperties.getSecret())  // 用secret解密
                     .parseClaimsJws(Token) // 解析jwt
                     .getBody(); // 获取所有声明
     }
