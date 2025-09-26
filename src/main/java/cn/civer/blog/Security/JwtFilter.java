@@ -1,6 +1,7 @@
 package cn.civer.blog.Security;
 
 import cn.civer.blog.Entity.Result;
+import cn.civer.blog.Utils.RedisUtils;
 import com.alibaba.fastjson2.JSON;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.*;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -18,6 +20,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 
 /**
@@ -28,6 +31,10 @@ import java.util.List;
 @Slf4j
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+    @Autowired
+    private RedisUtils redisUtils;
+
+
     @Override
     // public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
     protected void doFilterInternal(HttpServletRequest request,
@@ -86,20 +93,41 @@ public class JwtFilter extends OncePerRequestFilter {
         //  TODO 5.解析token，如果解析失败，返回错误结果（未登录）
         //  说明存在令牌，校验
         try{
-            // 获取负载的信息
+            // 1. 判断 token 是否在黑名单
+            if (redisUtils.isExsits("jwt:blacklist:" + token)) {
+                Result error = Result.error("Operat failed","TOKEN_INVALID");
+                response.getWriter().write(JSON.toJSONString(error));
+                return;
+            }
+
+            // 2. 解析 token
             Claims claims = JwtTokenProvider.parserToken(token);
             String userId = claims.getSubject();
 
-            // 权限列表配置
-            // 从 token 里取 roles
-            List<String> roles = claims.get("roles", List.class);
-            // 转换成 SimpleGrantedAuthority
-            List<SimpleGrantedAuthority> authorities = roles.stream()
-                .map(SimpleGrantedAuthority::new)
-                .toList();
+            // 3. 从 Redis 获取权限
+            String rolesJson = redisUtils.get("user:roles:" + userId);
+            List<SimpleGrantedAuthority> authorities;
+            if (rolesJson != null) {
+                List<String> roles = JSON.parseArray(rolesJson, String.class);
+                authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
+            } else {
+                // Redis 没有权限则从 token 获取
+                List<String> roles = claims.get("roles", List.class);
+                // 转换成 SimpleGrantedAuthority
+                authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
+                // 放入 Redis，过期时间和 JWT 保持一致，24 * 60 分钟
+                redisUtils.set("user:roles:" + userId, JSON.toJSONString(roles), Duration.ofMinutes(24*60));
+            }
+//            // 权限列表配置
+//            // 从 token 里取 roles
+//            List<String> roles = claims.get("roles", List.class);
+//            // 转换成 SimpleGrantedAuthority
+//            List<SimpleGrantedAuthority> authorities = roles.stream()
+//                .map(SimpleGrantedAuthority::new)
+//                .toList();
             // 使用Spring Security配置权限
             UsernamePasswordAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
+                    new UsernamePasswordAuthenticationToken(userId, token, authorities);
             // 将封装好的authentication对象放入到程序上下文中
             SecurityContextHolder.getContext().setAuthentication(authentication);
             log.info("Authentication set: {}", SecurityContextHolder.getContext().getAuthentication());

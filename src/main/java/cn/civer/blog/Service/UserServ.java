@@ -16,4 +16,5 @@ public interface UserServ {
     Result<String> userRegister(String username, String rawPassword);
     Result userUpdate(User user);
     Result<String> userLogin(String username, String rawPassword);
+    Result userLogout(String token);
 }

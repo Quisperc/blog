@@ -8,6 +8,8 @@ import cn.civer.blog.Security.JwtTokenProvider;
 import cn.civer.blog.Service.UserServ;
 import cn.civer.blog.Utils.PasswordUtils;
 import cn.civer.blog.Utils.PrivilegeUtils;
+import cn.civer.blog.Utils.RedisUtils;
+import com.alibaba.fastjson2.JSON;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -31,6 +34,8 @@ public class UserServImpl implements UserServ {
     private PasswordUtils passwordUtils;
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
+    @Autowired
+    private RedisUtils redisUtils;
 
     /**
      * 根据ID返回用户
@@ -186,28 +191,34 @@ public class UserServImpl implements UserServ {
 
         // 校验密码
         try {
-            String encodePassword = user.getPassword();
-            BigInteger userID = user.getId();
             // 将密码加密后与获取到的密码进行匹配
-            if(PasswordUtils.matches(rawPassword,encodePassword)) {
+            if(PasswordUtils.matches(rawPassword,user.getPassword())) {
                 // 更新登录时间
-                LocalDateTime now = LocalDateTime.now();
-                user.setLoginTime(now);
-
+                user.setLoginTime(LocalDateTime.now());
                 // 获取用户权限
                 List priList =  PrivilegeUtils.getPri(user);
-                log.info(priList.toString());
                 // 匹配成功则生成jwt并返回登录成功消息
-                String jwt = JwtTokenProvider.generateToken(userID,username,priList,mp);
+                String jwt = JwtTokenProvider.generateToken(user.getId(),username,priList,mp);
+                // 存入 redis
+                redisUtils.set("user:roles:" + user.getId(), JSON.toJSONString(priList), Duration.ofMinutes(24*60));
 
-                log.info("用户("+user.getUsername()+") 登录成功！");
+                log.info("用户("+user.getUsername()+") 登录成功！权限为"+priList);
                 return Result.Success("登录成功", jwt);
             }else{
                 log.info("用户("+user.getUsername()+") 登录失败！密码错误！");
                 return Result.error("登录失败","密码错误");
             }
         } catch (Exception e) {
+            log.info("用户("+user.getUsername()+") 登录失败！未知错误！");
             return Result.error();
         }
+    }
+
+    @Override
+    public Result userLogout(String token) {
+        // 加入黑名单，24*60保证jwt完全失效
+        redisUtils.set("jwt:blacklist:" + token, "true", Duration.ofMinutes(24*60)); // 和 JWT 保持一致
+        log.info("退出成功！token："+token+"已失效！");
+        return Result.Success("操作成功","用户退出");
     }
 }

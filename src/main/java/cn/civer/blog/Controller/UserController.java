@@ -3,10 +3,11 @@ package cn.civer.blog.Controller;
 import cn.civer.blog.Entity.Result;
 import cn.civer.blog.Entity.User;
 import cn.civer.blog.Service.UserServ;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletResponse;
+import org.apache.tomcat.util.http.parser.Authorization;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -55,5 +56,10 @@ public class UserController {
     @PutMapping("/update")
     public Result userUpdate(@RequestBody User user){
         return userServ.userUpdate(user);
+    }
+    @PostMapping("/logout")
+    public Result userUpdate(Authentication auth){
+        // 获取已登录用户的凭证
+        return userServ.userLogout(auth.getCredentials().toString());
     }
 }
