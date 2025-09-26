@@ -4,27 +4,39 @@ import cn.civer.blog.Entity.Result;
 import com.alibaba.fastjson2.JSON;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.*;
-import jakarta.servlet.annotation.WebFilter;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Jwt过滤器
  */
+//@WebFilter(urlPatterns = "/*")
+// public class JwtFilter implements Filter {
 @Slf4j
-@WebFilter(urlPatterns = "/*")
-public class JwtFilter implements Filter {
+@Component
+public class JwtFilter extends OncePerRequestFilter {
     @Override
-    public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+    // public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException{
         // ServletRequest、ServletResponse是父类，
         // 请求对象与响应对象
-        HttpServletRequest request = (HttpServletRequest) servletRequest;
-        HttpServletResponse response = (HttpServletResponse) servletResponse;
+//        HttpServletRequest request = (HttpServletRequest) request;
+//        HttpServletResponse response = (HttpServletResponse) response;
 
         //  TODO 1.获取请求url
         String requestURL = request.getRequestURL().toString(); //不toString就是StringBuffer类型
@@ -39,7 +51,25 @@ public class JwtFilter implements Filter {
         }
 
         //  TODO 3.获取请求头中的令牌（token）
-        String token = request.getHeader("token");
+        // 3. 先尝试从 Header 获取 token
+        String token = request.getHeader("Authorization");
+        if (StringUtils.hasLength(token) && token.startsWith("Bearer ")) {
+            token = token.substring(7); // 去掉 "Bearer "
+        }
+
+        if (!StringUtils.hasLength(token)) {
+            token = request.getHeader("token");
+        }
+
+        // 4. 如果 Header 没有，再从 Cookie 获取 token
+        if (!StringUtils.hasLength(token) && request.getCookies() != null) {
+            for (Cookie cookie : request.getCookies()) {
+                if ("token".equals(cookie.getName())) {
+                    token = cookie.getValue();
+                    break;
+                }
+            }
+        }
 
         //  TODO 4.判断令牌是否存在，如果不存在，返回错误结果（未登录）
         if (!StringUtils.hasLength(token)) { //spring当中的工具类
@@ -56,7 +86,24 @@ public class JwtFilter implements Filter {
         //  TODO 5.解析token，如果解析失败，返回错误结果（未登录）
         //  说明存在令牌，校验
         try{
+            // 获取负载的信息
             Claims claims = JwtTokenProvider.parserToken(token);
+            String userId = claims.getSubject();
+
+            // 权限列表配置
+            // 从 token 里取 roles
+            List<String> roles = claims.get("roles", List.class);
+            // 转换成 SimpleGrantedAuthority
+            List<SimpleGrantedAuthority> authorities = roles.stream()
+                .map(SimpleGrantedAuthority::new)
+                .toList();
+            // 使用Spring Security配置权限
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(userId, null, authorities);
+            // 将封装好的authentication对象放入到程序上下文中
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+            log.info("Authentication set: {}", SecurityContextHolder.getContext().getAuthentication());
+
         }catch (Exception e){ // 出现异常代表着解析失败
             e.printStackTrace();
             log.info("解析令牌失败，返回未登录错误信息");

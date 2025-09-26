@@ -10,9 +10,10 @@ public interface UserServ {
     // 用户登录
     // 用户注销
     // 用户信息更新
-    User getById(BigInteger id);
-    int removeById(BigInteger id);
+    Result getById(BigInteger id);
+    Result removeById(BigInteger id);
+    Result removeByUsername(String username);
     Result<String> userRegister(String username, String rawPassword);
-    int userUpdate(User user);
+    Result userUpdate(User user);
     Result<String> userLogin(String username, String rawPassword);
 }

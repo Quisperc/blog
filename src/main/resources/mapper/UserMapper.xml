@@ -32,21 +32,14 @@
             <if test="password != null and password != ''">
                 password = #{password},
             </if>
-            <if test="registerTime != null">
-                register_time = #{registerTime},
-            </if>
             <if test="loginTime != null">
                 login_time = #{loginTime},
             </if>
-            <if test="viewer != null">
-                viewer = #{viewer},
+            <if test="role != null">
+                role = #{role},
             </if>
         </set>
         WHERE id = #{id}
     </update>
-    <delete id="delete">
-        DELETE FROM t_user
-        WHERE id = #{id}
-    </delete>
 
 </mapper>

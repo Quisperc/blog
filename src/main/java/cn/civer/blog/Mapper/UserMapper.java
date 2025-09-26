@@ -1,6 +1,7 @@
 package cn.civer.blog.Mapper;
 
 import cn.civer.blog.Entity.User;
+import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -23,7 +24,10 @@ public interface UserMapper {
     // 插入用户
     int insert(User user);
     // 删除用户
-    int delete(@Param("id") BigInteger id);
+    @Delete("delete from t_user where id = #{id}")
+    int deleteById(@Param("id") BigInteger id);
+    @Delete("delete from t_user where username = #{username}")
+    int deleteByUsername(@Param("username") String username);
     // 更新用户
     int update(User user);
 }

@@ -7,16 +7,19 @@ import cn.civer.blog.Mapper.UserMapper;
 import cn.civer.blog.Security.JwtTokenProvider;
 import cn.civer.blog.Service.UserServ;
 import cn.civer.blog.Utils.PasswordUtils;
+import cn.civer.blog.Utils.PrivilegeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -29,20 +32,80 @@ public class UserServImpl implements UserServ {
     @Autowired
     private JwtTokenProvider jwtTokenProvider;
 
+    /**
+     * 根据ID返回用户
+     * @param id 用户ID
+     * @return 返回结果
+     */
     @Override
-    public User getById(BigInteger id) {
-        return userMapper.selectById(id);
+    public Result<?> getById(BigInteger id) {
+        User user = userMapper.selectById(id);
+        if(user == null){
+            return Result.error("获取失败","用户不存在");
+        }
+        return Result.Success("获取成功",user);
     }
 
+    /**
+     * 根据ID删除用户
+     * @param id 用户ID
+     * @return 返回结果
+     */
     @Override
-    public int removeById(BigInteger id) {
-
-        return userMapper.delete(id);
+    public Result removeById(BigInteger id) {
+        User user = userMapper.selectById(id);
+        // 判断用户是否存在
+        if(user==null){
+            log.info("用户("+id+") 删除失败！用户不存在");
+            return Result.error("删除失败","用户不存在！");
+        }
+        try {
+            userMapper.deleteById(id);
+            log.info("用户("+user.getUsername()+") 删除成功！");
+            return Result.Success("删除成功","用户已删除！");
+        } catch (Exception e) {
+            log.info("用户("+user.getUsername()+") 删除失败！");
+            return Result.error("删除失败","用户未删除！未知错误！");
+        }
     }
 
+    /**
+     * 根据用户名删除用户
+     * @param username 用户名
+     * @return 删除结果
+     */
+    @Override
+    public Result removeByUsername(String username) {
+        User user = userMapper.selectByUsername(username);
+        // 判断用户是否存在
+        if(user==null){
+            log.info("用户("+username+") 删除失败！用户不存在");
+            return Result.error("删除失败","用户不存在！");
+        }
+        try {
+            userMapper.deleteByUsername(username);
 
+
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+            log.info("Current auth: {}", auth);
+
+            log.info("用户("+user.getUsername()+") 删除成功！");
+            return Result.Success("删除成功","用户已删除！");
+        } catch (Exception e) {
+            log.info("用户("+user.getUsername()+") 删除失败！");
+            return Result.error("删除失败","用户未删除！未知错误！");
+        }
+    }
+
+    /**
+     * 用户注册
+     * @param username 用户名
+     * @param rawPassword 原始密码
+     * @return 注册结果
+     */
     @Override
     public Result<String> userRegister(String username, String rawPassword) {
+        // 填写新用户表单信息
         User user = new User();
         user.setUsername(username);
         user.setPassword(PasswordUtils.encode(rawPassword));
@@ -53,12 +116,14 @@ public class UserServImpl implements UserServ {
         //  DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         //  String formattedNow = now.format(formatter);
         try{
+            // 尝试注册
             if(userMapper.selectByUsername(username) != null){
                 log.info("用户("+user.getUsername()+") 注册失败！");
                 return Result.error("注册失败","用户已存在！");
             }
             userMapper.insert(user);
 
+            // 日志记录
             log.info("用户("+user.getUsername()+") 注册成功！");
             return Result.Success("注册成功","用户注册成功！");
         }catch(Exception ex){
@@ -67,10 +132,37 @@ public class UserServImpl implements UserServ {
         }
     }
 
-    @Override
-    public int userUpdate(User user) {
 
-        return userMapper.update(user);
+    /**
+     * 更新用户信息
+     * @param user 用户实例
+     * @return 更新结果
+     */
+    @Override
+    public Result userUpdate(User user) {
+        // 校验权限
+        // 校验输入是否存在用户名
+        if("".equals(user.getUsername())){
+            return Result.error("修改失败","用户名错误！");
+        }
+        // 校验用户是否存在
+        User newUser = userMapper.selectByUsername(user.getUsername());
+        if(newUser == null){
+            return Result.error("修改失败","用户不存在！");
+        }
+        try {
+            // 设置待修改用户的Id
+            user.setId(newUser.getId());
+            // 密码不为空则加密后更新
+            if(!"".equals(user.getPassword())){
+                user.setPassword(PasswordUtils.encode(user.getPassword()));
+            }
+            // 更新用户
+            userMapper.update(user);
+            return Result.Success("更新成功","用户信息已更新！");
+        } catch (Exception e) {
+            return Result.error("更新失败","未知错误！");
+        }
     }
 
     /**
@@ -98,13 +190,18 @@ public class UserServImpl implements UserServ {
             BigInteger userID = user.getId();
             // 将密码加密后与获取到的密码进行匹配
             if(PasswordUtils.matches(rawPassword,encodePassword)) {
-                // 匹配成功则生成jwt并返回登录成功消息
-                String jwt = JwtTokenProvider.generateToken(userID,username,mp);
                 // 更新登录时间
                 LocalDateTime now = LocalDateTime.now();
                 user.setLoginTime(now);
+
+                // 获取用户权限
+                List priList =  PrivilegeUtils.getPri(user);
+                log.info(priList.toString());
+                // 匹配成功则生成jwt并返回登录成功消息
+                String jwt = JwtTokenProvider.generateToken(userID,username,priList,mp);
+
                 log.info("用户("+user.getUsername()+") 登录成功！");
-                return Result.Success("登录成功", "jwt为"+jwt);
+                return Result.Success("登录成功", jwt);
             }else{
                 log.info("用户("+user.getUsername()+") 登录失败！密码错误！");
                 return Result.error("登录失败","密码错误");
