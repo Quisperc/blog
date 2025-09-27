@@ -1,22 +1,22 @@
-package cn.civer.blog.Entity;
+package cn.civer.blog.Model.Entity;
 
-import jakarta.persistence.*;
 import lombok.Data;
 
+import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
 public class Post {
-    private Long  id;
+    private BigInteger id;
     // 标题
     private String title;
     // 作者
-    private Long author;
+    private BigInteger authorId;
     // 分类
-    private List<String> classifies;
+    private List<Category> category;
     // 标签
-    private List<String> labels;
+    private List<Label> labels;
     // 文章梗概
     private String summary;
     // 文章发布状态

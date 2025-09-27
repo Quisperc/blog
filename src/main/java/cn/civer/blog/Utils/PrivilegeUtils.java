@@ -1,7 +1,7 @@
 package cn.civer.blog.Utils;
 
-import cn.civer.blog.Entity.Role;
-import cn.civer.blog.Entity.User;
+import cn.civer.blog.Model.Enum.Role;
+import cn.civer.blog.Model.Entity.User;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;

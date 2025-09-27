@@ -1,7 +1,7 @@
 package cn.civer.blog.Service;
 
-import cn.civer.blog.Entity.Result;
-import cn.civer.blog.Entity.User;
+import cn.civer.blog.Model.Entity.Result;
+import cn.civer.blog.Model.Entity.User;
 
 import java.math.BigInteger;
 

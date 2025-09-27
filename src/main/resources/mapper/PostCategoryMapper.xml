@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.civer.blog.Mapper.PostCategoryMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into t_post_category(post_id, category_id, create_time, update_time)
+        VALUES (#{postId},#{categoryId},NOW(),NOW())
+    </insert>
+    <update id="update">
+        UPDATE t_post_category
+        SET category_id = #{categoryId},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+</mapper>

@@ -17,3 +17,64 @@ CREATE TABLE IF NOT EXISTS t_user (
 -- 为 TiDB 创建索引
 # ALTER TABLE t_user ADD INDEX idx_viewer (viewer);
 # ALTER TABLE t_user ADD INDEX idx_register_time (register_time);
+# 文章表
+# Drop table t_post;
+CREATE TABLE IF NOT EXISTS t_post (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '文章ID',
+    title VARCHAR(50) NOT NULL COMMENT '文章名',
+    author_id VARCHAR(255) NOT NULL COMMENT '作者ID',
+    summary VARCHAR(20) NOT NULL COMMENT '梗概',
+    likes INT DEFAULT 0 COMMENT '点赞',
+    views INT DEFAULT 0 COMMENT '浏览次数',
+    status INT DEFAULT 0 COMMENT '发布状态',
+    content LONGTEXT COMMENT '文章内容',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '更新时间',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='文章表';
+
+# Drop table t_category;
+CREATE TABLE IF NOT EXISTS t_category (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '分类ID',
+    title VARCHAR(50) NOT NULL COMMENT '分类名',
+    author_id VARCHAR(255) NOT NULL COMMENT '分类创建作者ID',
+    summary VARCHAR(20) NOT NULL COMMENT '分类介绍',
+    status INT DEFAULT 0 COMMENT '启用状态',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_category_title (title)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='分类表';
+
+# Drop table t_label;
+CREATE TABLE IF NOT EXISTS t_label (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '标签ID',
+    title VARCHAR(50) NOT NULL COMMENT '标签名',
+    author_id VARCHAR(255) NOT NULL COMMENT '标签创建作者ID',
+    summary VARCHAR(20) COMMENT '标签介绍',
+    status INT DEFAULT 0 COMMENT '启用状态',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '更新时间',
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_label_title (title)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='标签表';
+
+# Drop table t_post_category;
+CREATE TABLE IF NOT EXISTS t_post_category (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
+    post_id BIGINT NOT NULL COMMENT '文章ID',
+    category_id BIGINT NOT NULL COMMENT '分类ID',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '更新时间',
+    PRIMARY KEY (id)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='文章-分类表';
+
+# Drop table t_post_label;
+CREATE TABLE IF NOT EXISTS t_post_label (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '记录ID',
+    post_id BIGINT NOT NULL COMMENT '文章ID',
+    label_id BIGINT NOT NULL COMMENT '标签ID',
+    create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '创建时间',
+    update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '更新时间',
+    PRIMARY KEY (id)
+)ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='文章-标签表';

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="cn.civer.blog.Mapper.PostLabelMapper">
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into t_post_label(post_id, label_id, create_time, update_time)
+        VALUES (#{postId},#{labelId},NOW(),NOW())
+    </insert>
+    <update id="update">
+        UPDATE t_post_label
+        SET label_id = #{labelId},
+            update_time = NOW()
+        WHERE id = #{id}
+    </update>
+</mapper>

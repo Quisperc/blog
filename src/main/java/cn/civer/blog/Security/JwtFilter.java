@@ -1,6 +1,6 @@
 package cn.civer.blog.Security;
 
-import cn.civer.blog.Entity.Result;
+import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Utils.RedisUtils;
 import com.alibaba.fastjson2.JSON;
 import io.jsonwebtoken.Claims;
@@ -95,7 +95,7 @@ public class JwtFilter extends OncePerRequestFilter {
         try{
             // 1. 判断 token 是否在黑名单
             if (redisUtils.isExsits("jwt:blacklist:" + token)) {
-                Result error = Result.error("Operat failed","TOKEN_INVALID");
+                Result error = Result.error("Operate failed","TOKEN_INVALID");
                 response.getWriter().write(JSON.toJSONString(error));
                 return;
             }

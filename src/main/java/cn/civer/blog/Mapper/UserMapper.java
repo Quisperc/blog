@@ -1,6 +1,6 @@
 package cn.civer.blog.Mapper;
 
-import cn.civer.blog.Entity.User;
+import cn.civer.blog.Model.Entity.User;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;

@@ -1,5 +1,6 @@
-package cn.civer.blog.Entity;
+package cn.civer.blog.Model.Entity;
 
+import cn.civer.blog.Model.Enum.Role;
 import lombok.Data;
 
 import java.math.BigInteger;
