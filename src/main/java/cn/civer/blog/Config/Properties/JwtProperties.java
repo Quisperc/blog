@@ -1,4 +1,4 @@
-package cn.civer.blog.Properties;
+package cn.civer.blog.Config.Properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

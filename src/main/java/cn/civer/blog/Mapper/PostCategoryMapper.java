@@ -1,7 +1,10 @@
 package cn.civer.blog.Mapper;
 
+import cn.civer.blog.Model.DTO.PostCategoryDTO;
+import cn.civer.blog.Model.DTO.PostLabelDTO;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.math.BigInteger;
@@ -13,9 +16,16 @@ public interface PostCategoryMapper {
      * 插入新的文章对应分类
      * @param postId 文章ID
      * @param categoryId 分类ID
-     * @return 修改行数
+     * @return 记录Id
      */
-    int insert(BigInteger postId, BigInteger categoryId);
+//    int insert(@Param("postId") BigInteger postId, @Param("categoryId")BigInteger categoryId);
+
+    /**
+     * 插入新的文章对应分类
+     * @param postCategoryDTO 文章分类DTO
+     * @return 记录ID
+     */
+    int insert(PostCategoryDTO postCategoryDTO);
 
     /**
      * 根据文章ID删除文章
@@ -51,12 +61,11 @@ public interface PostCategoryMapper {
 
     /**
      * 根据文章ID和分类ID获取记录
-     * @param postId 文章ID
-     * @param categoryId 分类ID
+     * @param postCategoryDTO 文章-分类DTO
      * @return 记录ID
      */
     @Select("select id from t_post_category where post_id = #{postId} and category_id = #{categoryId}")
-    List<BigInteger> selectByPostAndCategory(BigInteger postId,BigInteger categoryId);
+    List<BigInteger> selectByPostAndCategory(PostCategoryDTO postCategoryDTO);
 
     /**
      * 根据记录ID修改文章对应的分类

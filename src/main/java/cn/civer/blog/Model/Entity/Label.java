@@ -9,6 +9,7 @@ import java.time.LocalDateTime;
 public class Label {
     private BigInteger id;
     private BigInteger authorId;
+    private String title;
     private String summary;
     private Integer status;
     private LocalDateTime createTime;

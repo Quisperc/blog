@@ -2,11 +2,13 @@ package cn.civer.blog.Mapper;
 
 import cn.civer.blog.Model.Entity.Label;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
 import java.math.BigInteger;
 import java.util.List;
 
+@Mapper
 public interface LabelMapper {
     /**
      * 插入分类

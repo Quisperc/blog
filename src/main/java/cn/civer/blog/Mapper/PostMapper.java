@@ -1,10 +1,7 @@
 package cn.civer.blog.Mapper;
 
 import cn.civer.blog.Model.Entity.Post;
-import org.apache.ibatis.annotations.Mapper;
-import org.apache.ibatis.annotations.Param;
-import org.apache.ibatis.annotations.Select;
-import org.apache.ibatis.annotations.Update;
+import org.apache.ibatis.annotations.*;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -99,4 +96,12 @@ public interface PostMapper {
      */
     @Update("UPDATE t_post SET likes = IFNULL(likes,0) + 1 WHERE id = #{id}")
     int incrementLikes(@Param("id") BigInteger id);
+
+    /**
+     * 根据ID删除文章
+     * @param id 文章ID
+     * @return 删除行数
+     */
+    @Delete("delete from t_post where id = #{id}")
+    int deleteByIdInt(BigInteger id);
 }

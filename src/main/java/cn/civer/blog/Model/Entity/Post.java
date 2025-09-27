@@ -14,13 +14,13 @@ public class Post {
     // 作者
     private BigInteger authorId;
     // 分类
-    private List<Category> category;
+    private List<Category> categorys;
     // 标签
     private List<Label> labels;
     // 文章梗概
     private String summary;
     // 文章发布状态
-    private Integer status; // 1 发布, 0 草稿
+    private Integer status = 0; // 1 发布, 0 草稿
     // 浏览次数
     private Integer views = 0;
     // 点赞次数

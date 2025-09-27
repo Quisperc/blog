@@ -1,6 +1,6 @@
-package cn.civer.blog.Security;
+package cn.civer.blog.Config.Security;
 
-import cn.civer.blog.Properties.JwtProperties;
+import cn.civer.blog.Config.Properties.JwtProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
 import lombok.Data;

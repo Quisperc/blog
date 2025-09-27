@@ -1,7 +1,9 @@
 package cn.civer.blog.Mapper;
 
+import cn.civer.blog.Model.DTO.PostLabelDTO;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.math.BigInteger;
@@ -13,9 +15,16 @@ public interface PostLabelMapper {
      * 插入新的文章对应标签
      * @param postId 文章ID
      * @param labelId 标签ID
-     * @return 修改行数
+     * @return 记录Id
      */
-    int insert(BigInteger postId,BigInteger labelId);
+    // int insert(@Param("postId")BigInteger postId, @Param("labelId")BigInteger labelId);
+
+    /**
+     * 插入新的文章对应标签
+     * @param postLabelDTO 文章-标签DTO
+     * @return 记录Id
+     */
+    int insert(PostLabelDTO postLabelDTO);
 
     /**
      * 根据文章ID删除记录
@@ -51,12 +60,11 @@ public interface PostLabelMapper {
 
     /**
      * 根据文章ID和标签ID获取记录ID
-     * @param postId 文章ID
-     * @param labelId 记录ID
-     * @return 记录ID
+     * @param postLabelDTO 文章标签DTO
+     * @return 查询的记录ID
      */
     @Select("select id from t_post_label where post_id = #{postId} and label_id = #{labelId}")
-    List<BigInteger> selectByPostAndlabel(BigInteger postId,BigInteger labelId);
+    List<BigInteger> selectByPostAndlabel(PostLabelDTO postLabelDTO);
 
     /**
      * 更新记录（更新文章标签

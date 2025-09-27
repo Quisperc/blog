@@ -1,4 +1,4 @@
-package cn.civer.blog.Security;
+package cn.civer.blog.Config.Security;
 
 import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Utils.RedisUtils;
