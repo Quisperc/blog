@@ -9,84 +9,43 @@ public class Result<T> {
     private String msg;
     private T data;
 
-    /**
-     * 全参数返回
-     * @param code 状态码
-     * @param message 信息
-     * @param data 数据
-     * @return 封装结果
-     * @param <T> 泛型
-     */
-    public static<T> Result<T> response(Integer code,String message, T data){
-        Result<T> result = new Result<>();
-        result.setCode(code);
-        result.setMsg(message);
-        result.setData(data);
-        return result;
-    }
-    // 错误（Data）
-    public static<T> Result<T> error(T Data){
-        Result<T> result = new Result<>();
-        result.setCode(Status.UNKNOWN_ERROR.getCode());
-        result.setMsg(Status.UNKNOWN_ERROR.getMsg());
-        result.setData(Data);
-        return result;
-    }
-    // 错误（null）
-    public static<T> Result<T> error(){
-        Result<T> result = new Result<>();
-        result.setCode(Status.UNKNOWN_ERROR.getCode());
-        result.setMsg(Status.UNKNOWN_ERROR.getMsg());
-        result.setData(null);
-        return result;
-    }
-    // 错误（msg,Data）
-    public static<T> Result<T> error(String msg,T Data){
-        Result<T> result = new Result<>();
-        result.setCode(Status.UNKNOWN_ERROR.getCode());
-        result.setMsg(msg);
-        result.setData(Data);
-        return result;
-    }
-    // 错误（msg,Data）
-    public static<T> Result<T> error(String msg){
-        Result<T> result = new Result<>();
-        result.setCode(Status.UNKNOWN_ERROR.getCode());
-        result.setMsg(msg);
-        result.setData(null);
-        return result;
+    private Result(Integer code, String msg, T data) {
+        this.code = code;
+        this.msg = msg;
+        this.data = data;
     }
 
-    // 正确(Data)
-    public static<T> Result<T> Success(T Data){
-        Result<T> result = new Result<>();
-        result.setCode(Status.SUCCESS.getCode());
-        result.setMsg(Status.SUCCESS.getMsg());
-        result.setData(Data);
-        return result;
+    // ---------------- 成功 ----------------
+    public static <T> Result<T> success(T data) {
+        return new Result<>(Status.SUCCESS.getCode(), Status.SUCCESS.getMsg(), data);
     }
-    // 成功（null）
-    public static<T> Result<T> Success(){
-        Result<T> result = new Result<>();
-        result.setCode(Status.SUCCESS.getCode());
-        result.setMsg(Status.SUCCESS.getMsg());
-        result.setData(null);
-        return result;
+
+    public static <T> Result<T> success() {
+        return new Result<>(Status.SUCCESS.getCode(), Status.SUCCESS.getMsg(), null);
     }
-    // 成功（msg,Data）
-    public static<T> Result<T> Success(String msg,T Data){
-        Result<T> result = new Result<>();
-        result.setCode(Status.SUCCESS.getCode());
-        result.setMsg(msg);
-        result.setData(Data);
-        return result;
+
+    public static <T> Result<T> success(String msg, T data) {
+        return new Result<>(Status.SUCCESS.getCode(), msg, data);
     }
-    // 成功（msg）
-    public static<T> Result<T> Success(String msg){
-        Result<T> result = new Result<>();
-        result.setCode(Status.SUCCESS.getCode());
-        result.setMsg(msg);
-        result.setData(null);
-        return result;
+
+    public static <T> Result<T> successMsg(String msg) {
+        return new Result<>(Status.SUCCESS.getCode(), msg, null);
+    }
+
+    // ---------------- 错误 ----------------
+    public static <T> Result<T> error(T data) {
+        return new Result<>(Status.OPERATION_ERROR.getCode(), Status.OPERATION_ERROR.getMsg(), data);
+    }
+
+    public static <T> Result<T> error() {
+        return new Result<>(Status.UNKNOWN_ERROR.getCode(), Status.UNKNOWN_ERROR.getMsg(), null);
+    }
+
+    public static <T> Result<T> error(String msg, T data) {
+        return new Result<>(Status.OPERATION_ERROR.getCode(), msg, data);
+    }
+
+    public static <T> Result<T> errorMsg(String msg) {
+        return new Result<>(Status.OPERATION_ERROR.getCode(), msg, null);
     }
 }

@@ -103,5 +103,5 @@ public interface PostMapper {
      * @return 删除行数
      */
     @Delete("delete from t_post where id = #{id}")
-    int deleteByIdInt(BigInteger id);
+    int deleteById(BigInteger id);
 }
