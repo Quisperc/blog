@@ -11,7 +11,7 @@ public class Label {
     private BigInteger authorId;
     private String title;
     private String summary;
-    private Integer status;
+    private Integer status = 1;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
 }

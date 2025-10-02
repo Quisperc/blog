@@ -1,8 +1,7 @@
 package cn.civer.blog.Service.Impl;
 
 import cn.civer.blog.Mapper.*;
-import cn.civer.blog.Model.DTO.PostCategoryDTO;
-import cn.civer.blog.Model.DTO.PostLabelDTO;
+import cn.civer.blog.Model.DTO.*;
 import cn.civer.blog.Model.Entity.Category;
 import cn.civer.blog.Model.Entity.Label;
 import cn.civer.blog.Model.Entity.Post;
@@ -34,40 +33,47 @@ public class PostServImpl implements PostServ {
 
     /**
      * 新增文章
-     * @param post 文章
-     * @return 操作结果
+     * @param postDTO 文章DTO
+     * @return 插入结果
      */
     @Override
-    public Result postAdd(Post post) {
+    public Result postAdd(PostDTO postDTO) {
         try {
             // 每次调用方法时动态获取
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || authentication.getName() == null) {
-                return Result.error( "未登录或身份无效！");
-            }
+            Post post = new Post();
             // 1. 文章表
             // 1.1 设置作者
             post.setAuthorId(new BigInteger(authentication.getName()));
             // 1.2 插入文章表并获取文章ID
+            post.setTitle(postDTO.getTitle());
+            post.setContent(postDTO.getContent());
+            post.setSummary(postDTO.getSummary());
             postMapper.insert(post);
+
             BigInteger postId = post.getId();
             log.info("成功插入文章："+post.getTitle()+"，文章ID："+postId);
 
             // 2. 分类表以及文章分类表
             // 2.1 获取分类
-            List<Category> postCategory = post.getCategorys();
-            // 2.2 遍历分类
-            for(Category cate: postCategory){
+            List<CategoryDTO> categoryDTOS = postDTO.getCategories();
+            // 2.2 遍历分类DTO
+            for(CategoryDTO categoryDTO:categoryDTOS){
                 // 2.3 验证分类是否存在,不存在则创建
-                Category validCate = categoryMapper.selectByTitle(cate.getTitle());
+                Category validCate = categoryMapper.selectByTitle(categoryDTO.getTitle());
                 if(validCate == null) {
+                    Category cate = new Category();
                     cate.setAuthorId(new BigInteger(authentication.getName()));
+                    cate.setTitle(categoryDTO.getTitle());
+                    cate.setSummary(categoryDTO.getSummary());
                     categoryMapper.insert(cate);
                     log.info("成功创建分类："+cate.getTitle());
+
                     // 2.4 获取文章-分类DTO
                     PostCategoryDTO postCategoryDTO = new PostCategoryDTO();
                     postCategoryDTO.setPostId(postId);
                     postCategoryDTO.setCategoryId(cate.getId());
+
                     // 2.5 校验文章-标签该记录是否已存在
                     List<BigInteger> postCategorysIds =  postCategoryMapper.selectByPostAndCategory(postCategoryDTO);
                     if(postCategorysIds.isEmpty()) {
@@ -96,27 +102,33 @@ public class PostServImpl implements PostServ {
 
             // 3 标签表以及文章-标签表
             // 3.1 获取标签
-            List<Label> postLabels = post.getLabels();
+            List<LabelDTO> postLabelDTOs = postDTO.getLabels();
             // 3.2 遍历标签
-            for(Label label: postLabels){
+            for(LabelDTO labelDTO: postLabelDTOs){
                 // 3.3 验证标签是否存在,不存在则创建
-                Label validLabel = labelMapper.selectByTitle(label.getTitle());
+                Label validLabel = labelMapper.selectByTitle(labelDTO.getTitle());
+
                 if(validLabel == null) {
-                    label.setAuthorId(new BigInteger(authentication.getName()));
-                    labelMapper.insert(label);
-                    log.info("成功创建标签："+label.getTitle());
+                    Label lab = new Label();
+                    lab.setAuthorId(new BigInteger(authentication.getName()));
+                    lab.setTitle(labelDTO.getTitle());
+                    lab.setSummary(labelDTO.getSummary());
+                    labelMapper.insert(lab);
+                    log.info("成功创建标签："+labelDTO.getTitle());
+
                     // 3，4 获取文章-标签DTO
                     PostLabelDTO postLabelDTO = new PostLabelDTO();
-                    postLabelDTO.setLabelId(label.getId());
+                    postLabelDTO.setLabelId(lab.getId());
                     postLabelDTO.setPostId(postId);
+
                     // 3.5 校验文章-标签该记录是否已存在
                     List<BigInteger> postLabelsIds =  postLabelMapper.selectByPostAndlabel(postLabelDTO);
                     if(postLabelsIds.isEmpty()) {
                         // 3.6 将文章-标签插入文章-标签表
                         postLabelMapper.insert(postLabelDTO);
-                        log.info("成功插入文章-标签表：" + postId + "--" + label.getId());
+                        log.info("成功插入文章-标签表：" + postId + "--" + lab.getId());
                     }else{
-                        log.warn("插入文章-标签表：" + postId + "--" + label.getId()+"失败，文章已记录！");
+                        log.warn("插入文章-标签表：" + postId + "--" + lab.getId()+"失败，文章已记录！");
                     }
                 }else{
                     // 3，4 获取文章-标签DTO
@@ -135,8 +147,7 @@ public class PostServImpl implements PostServ {
                 }
             }
         } catch (NumberFormatException e) {
-            log.error("插入文章："+post.getTitle()+"，文章ID："+post.getId()+"失败："+e);
-            return Result.error("文章保存失败！");
+            return Result.error("插入文章："+postDTO.getTitle()+"失败："+e);
         }
         return Result.success("文章保存成功！");
     }
@@ -163,53 +174,53 @@ public class PostServImpl implements PostServ {
             }
             return Result.success("文章已删除");
         } catch (Exception e) {
-            log.error("文章(ID:"+id+")无法被"+authentication.getName()+"删除，文章不存在/用户权限不足："+e);
-            return Result.error("文章删除失败");
+//            log.error("文章(ID:"+id+")无法被"+authentication.getName()+"删除，文章不存在/用户权限不足："+e);
+            return Result.error("文章(ID:"+id+")无法被"+authentication.getName()+"删除，文章不存在/用户权限不足："+e);
         }
     }
 
-    /**
-     * 根据Title删除文章
-     * @param title 文章名
-     * @return 删除结果
-     */
-    @Override
-    public Result postDeleteByTitle(String title) {
-        // 每次调用方法时动态获取
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        try {
-            // 1. 获取文章
-            List<Post> posts =  postMapper.selectByTitle(title);
-            // 2. 遍历获取的文章
-            for(Post post:posts){
-                // 3. 文章删除成功
-                if(postMapper.deleteById(post.getId()) == 1){
-                    log.info("文章(ID:"+post.getId()+")已被"+authentication.getName()+"删除");
-                    // 4. 删除对应的文章-标签表/分类表
-                    postLabelMapper.deleteByPostId(post.getId());
-                    postCategoryMapper.deleteByPostId(post.getId());
-                }else {
-                    // 文章删除失败
-                    log.warn("文章(ID:"+post.getId()+")无法被"+authentication.getName()+"删除");
-                }
-            }
-            return Result.success("文章已删除");
-        } catch (Exception e) {
-            log.error("文章()无法被"+authentication.getName()+"删除，文章不存在/用户权限不足："+e);
-            return Result.error("文章删除失败");
-        }
-    }
+//    /**
+//     * 根据Title删除文章
+//     * @param title 文章名
+//     * @return 删除结果
+//     */
+//    @Override
+//    public Result postDeleteByTitle(String title) {
+//        // 每次调用方法时动态获取
+//        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+//        try {
+//            // 1. 获取文章
+//            List<Post> posts =  postMapper.selectByTitle(title);
+//            // 2. 遍历获取的文章
+//            for(Post post:posts){
+//                // 3. 文章删除成功
+//                if(postMapper.deleteById(post.getId()) == 1){
+//                    log.info("文章(ID:"+post.getId()+")已被"+authentication.getName()+"删除");
+//                    // 4. 删除对应的文章-标签表/分类表
+//                    postLabelMapper.deleteByPostId(post.getId());
+//                    postCategoryMapper.deleteByPostId(post.getId());
+//                }else {
+//                    // 文章删除失败
+//                    log.warn("文章(ID:"+post.getId()+")无法被"+authentication.getName()+"删除");
+//                }
+//            }
+//            return Result.success("文章已删除");
+//        } catch (Exception e) {
+//            log.error("文章()无法被"+authentication.getName()+"删除，文章不存在/用户权限不足："+e);
+//            return Result.error("文章删除失败");
+//        }
+//    }
 
     /**
      * 根据分类删除文章
-     * @param category 分类
+     * @param categoryId 分类
      * @return 删除结果
      */
     @Override
-    public Result postDeleteByCategory(Category category) {
+    public Result postDeleteByCategory(BigInteger categoryId) {
         try {
             // 1. 查询包含该分类Id的文章
-            List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(category.getId());
+            List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
             // 2. 遍历postIds
             for(BigInteger postId:postIds){
                 // 3. 根据Id删除文章
@@ -234,14 +245,14 @@ public class PostServImpl implements PostServ {
 
     /**
      * 根据标签删除文章
-     * @param label 标签
+     * @param labelId 标签
      * @return 删除结果
      */
     @Override
-    public Result postDeleteByLabel(Label label) {
+    public Result postDeleteByLabel(BigInteger labelId) {
         try {
             // 1. 查询包含该分类Id的文章
-            List<BigInteger> postIds = postLabelMapper.selectBylabelId(label.getId());
+            List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);
             // 2. 遍历postIds
             for(BigInteger postId:postIds){
                 // 3. 根据Id删除文章
@@ -266,25 +277,39 @@ public class PostServImpl implements PostServ {
 
     /**
      * 更新文章
-     * @param post 文章
+     * @param postId 文章Id
+     * @param postDTO 文章DTO
      * @return 修改结果
      */
     @Override
-    public Result postUpdate(Post post) {
+    public Result postUpdate(BigInteger postId, PostDTO postDTO) {
         try {
             // 1. 更新文章
+            Post post = new Post();
+            post.setId(postId);
+            if(!"".equals(postDTO.getTitle()))
+                post.setTitle(postDTO.getTitle());
+            if(!"".equals(postDTO.getSummary()))
+                post.setSummary(postDTO.getSummary());
+            if(!"".equals(postDTO.getContent()))
+                post.setContent(postDTO.getContent());
+            if(postDTO.getStatus() != null)
+                post.setStatus(postDTO.getStatus());
             postMapper.update(post);
+
             // 2. 获取文章标签与分类
-            List<Label> labels = post.getLabels();
-            List<Category> categories = post.getCategorys();
+            List<LabelDTO> labels = postDTO.getLabels();
+            List<CategoryDTO> categories = postDTO.getCategories();
             if(!labels.isEmpty()) {
                 // 2.1. 删除原标签
                 postLabelMapper.deleteByPostId(post.getId());
                 // 2.2 添加新标签
-                for (Label label : labels) {
+                for (LabelDTO labelDTO : labels) {
                     PostLabelDTO postLabelDTO = new PostLabelDTO();
-                    postLabelDTO.setPostId(post.getId());
-                    postLabelDTO.setLabelId(label.getId());
+
+                    postLabelDTO.setPostId(postId);
+                    // 根据title获取Label的Id
+                    postLabelDTO.setLabelId(labelMapper.selectByTitle(labelDTO.getTitle()).getId());
                     postLabelMapper.insert(postLabelDTO);
                 }
             }
@@ -292,10 +317,12 @@ public class PostServImpl implements PostServ {
                 // 3.1 删除原分类
                 postCategoryMapper.deleteByPostId(post.getId());
                 // 3.2 添加新分类
-                for (Category category : categories) {
+                for (CategoryDTO categoryDTO : categories) {
                     PostCategoryDTO postCategoryDTO = new PostCategoryDTO();
+
                     postCategoryDTO.setPostId(post.getId());
-                    postCategoryDTO.setCategoryId(category.getId());
+                    // 根据title获取Category的Id
+                    postCategoryDTO.setCategoryId(categoryMapper.selectByTitle(categoryDTO.getTitle()).getId());
                     postCategoryMapper.insert(postCategoryDTO);
                 }
             }
@@ -315,16 +342,28 @@ public class PostServImpl implements PostServ {
     @Override
     public Result postSelectById(BigInteger id) {
         try {
+            // 设置文章其他信息
             Post post =  postMapper.selectById(id);
-            List categories = postCategoryMapper.selectByPostId(id);
-            List labels = postLabelMapper.selectByPostId(id);
+            // 保存分类
+            List<Category> categories = null;
+            // 获取分类IDs
+            List<BigInteger> categoryIds = postCategoryMapper.selectByPostId(id);
+            for(BigInteger categoryId:categoryIds){
+                categories.add(categoryMapper.selectById(categoryId));
+            }
+            // 保存标签
+            List<Label> labels = null;
+            List<BigInteger> labelIds = postLabelMapper.selectByPostId(id);
+            for(BigInteger labelId:labelIds){
+              labels.add(labelMapper.selectById(labelId));
+            }
+            // 设置标签和分类
             post.setCategorys(categories);
             post.setLabels(labels);
             log.info("查找文章("+id+")成功");
             return Result.success(post);
         } catch (Exception e) {
-            log.error("查找文章失败："+e);
-            return Result.error("查找文章失败");
+            return Result.error("查找文章失败"+e);
         }
     }
 
@@ -338,33 +377,56 @@ public class PostServImpl implements PostServ {
         try {
             List<Post> posts = postMapper.selectByTitle(title);
             for(Post post:posts) {
-                List categories = postCategoryMapper.selectByPostId(post.getId());
-                List labels = postLabelMapper.selectByPostId(post.getId());
+                // 保存分类
+                List<Category> categories = null;
+                // 获取分类IDs
+                List<BigInteger> categoryIds = postCategoryMapper.selectByPostId(post.getId());
+                for(BigInteger categoryId:categoryIds){
+                    categories.add(categoryMapper.selectById(categoryId));
+                }
+                // 保存标签
+                List<Label> labels = null;
+                List<BigInteger> labelIds = postLabelMapper.selectByPostId(post.getId());
+                for(BigInteger labelId:labelIds){
+                  labels.add(labelMapper.selectById(labelId));
+                }
+                // 设置标签和分类
                 post.setCategorys(categories);
                 post.setLabels(labels);
+                posts.add(post);
                 log.info("查找文章(" + post.getId() + ")成功");
             }
             return Result.success(posts);
         } catch (Exception e) {
-            log.error("查找文章失败："+e);
-            return Result.error("查找文章失败");
+            return Result.error("查找文章失败："+e);
         }
     }
 
     /**
      * 根据分类查询文章
-     * @param category 分类
+     * @param categoryId 分类Id
      * @return 查询文章的集合
      */
     @Override
-    public Result postSelectByCategory(Category category) {
+    public Result postSelectByCategory(BigInteger categoryId) {
         try {
-            List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(category.getId());
-            List<Post> posts = new ArrayList<>();
+            List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
+            List<Post> posts = null;
             for(BigInteger postId:postIds) {
                 Post post = postMapper.selectById(postId);
-                List categories = postCategoryMapper.selectByPostId(postId);
-                List labels = postLabelMapper.selectByPostId(postId);
+                // 保存分类
+                List<Category> categories = null;
+                // 获取分类IDs
+                List<BigInteger> categoryIds = postCategoryMapper.selectByPostId(post.getId());
+                for(BigInteger categoryId2:categoryIds){
+                    categories.add(categoryMapper.selectById(categoryId2));
+                }
+                // 保存标签
+                List<Label> labels = null;
+                List<BigInteger> labelIds = postLabelMapper.selectByPostId(post.getId());
+                for(BigInteger labelId:labelIds) {
+                    labels.add(labelMapper.selectById(labelId));
+                }
                 post.setCategorys(categories);
                 post.setLabels(labels);
                 posts.add(post);
@@ -379,18 +441,29 @@ public class PostServImpl implements PostServ {
 
     /**
      * 根据标签查询文章
-     * @param label 标签
+     * @param labelId 标签
      * @return 查询文章的集合
      */
     @Override
-    public Result postSelectByLabel(Label label) {
+    public Result postSelectByLabel(BigInteger labelId) {
         try {
-            List<BigInteger> postIds = postLabelMapper.selectBylabelId(label.getId());
+            List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);
             List<Post> posts = new ArrayList<>();
             for(BigInteger postId:postIds) {
                 Post post = postMapper.selectById(postId);
-                List categories = postCategoryMapper.selectByPostId(postId);
-                List labels = postLabelMapper.selectByPostId(postId);
+                // 保存分类
+                List<Category> categories = null;
+                // 获取分类IDs
+                List<BigInteger> categoryIds = postCategoryMapper.selectByPostId(post.getId());
+                for(BigInteger categoryId:categoryIds){
+                    categories.add(categoryMapper.selectById(categoryId));
+                }
+                // 保存标签
+                List<Label> labels = null;
+                List<BigInteger> labelIds = postLabelMapper.selectByPostId(post.getId());
+                for(BigInteger labelId2:labelIds) {
+                    labels.add(labelMapper.selectById(labelId2));
+                }
                 post.setCategorys(categories);
                 post.setLabels(labels);
                 posts.add(post);
@@ -401,5 +474,30 @@ public class PostServImpl implements PostServ {
             log.error("查找文章失败："+e);
             return Result.error("查找文章失败");
         }
+    }
+
+    /**
+     * 查询所有文章
+     * @return 文章列表
+     */
+    @Override
+    public Result postSelectAll() {
+        List<Post> posts = postMapper.selectAll();
+        for(Post post:posts){
+            // 标签IDs
+            List<BigInteger> labelIds = postLabelMapper.selectByPostId(post.getId());
+            List<Label> labels = null;
+            for(BigInteger labelId:labelIds){
+                labels.add(labelMapper.selectById(labelId));
+            }
+            // 分类IDs
+            List<BigInteger> categoryIds = postCategoryMapper.selectByPostId(post.getId());
+            List<Category> categories = null;
+            for(BigInteger categoryId:categoryIds){
+                categories.add(categoryMapper.selectById(categoryId));
+            }
+            post.setCategorys(categories);
+        }
+        return Result.success(posts);
     }
 }

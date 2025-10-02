@@ -43,7 +43,7 @@ public interface PostLabelMapper {
     int deleteBylabelId(BigInteger labelId);
 
     /**
-     * 根据文章ID查询标签
+     * 根据文章ID查询标签ID
      * @param postId 文章ID
      * @return 标签ID集合
      */

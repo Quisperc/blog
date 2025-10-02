@@ -1,9 +1,9 @@
 package cn.civer.blog.Service.Impl;
 
-import cn.civer.blog.Mapper.CategoryMapper;
-import cn.civer.blog.Model.Entity.Category;
+import cn.civer.blog.Mapper.LabelMapper;
+import cn.civer.blog.Model.Entity.Label;
 import cn.civer.blog.Model.Entity.Result;
-import cn.civer.blog.Service.CategoryServ;
+import cn.civer.blog.Service.LabelServ;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
@@ -14,23 +14,23 @@ import java.math.BigInteger;
 
 @Slf4j
 @Service
-public class CategoryServImpl implements CategoryServ {
+public class LabelServImpl implements LabelServ {
     @Autowired
-    private CategoryMapper categoryMapper;
+    private LabelMapper labelMapper;
     @Override
-    public Result categoryInsert(String title,String summary) {
+    public Result labelInsert(String title,String summary) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         BigInteger userId = new BigInteger(auth.getName());
         try {
-            Category category = categoryMapper.selectByTitle(title);
-            if(category != null)
+            Label label = labelMapper.selectByTitle(title);
+            if(label != null)
                 return Result.error("标签已存在");
             
-            Category newcategory = new Category();
-            newcategory.setAuthorId(userId); // 创作者ID
-            newcategory.setTitle(title); // 标签标题
-            newcategory.setSummary(summary); // 标签介绍
-            categoryMapper.insert(category);
+            Label newlabel = new Label();
+            newlabel.setAuthorId(userId); // 创作者ID
+            newlabel.setTitle(title); // 标签标题
+            newlabel.setSummary(summary); // 标签介绍
+            labelMapper.insert(label);
             
             return Result.success("标签插入成功");
         } catch (Exception e) {
@@ -39,13 +39,13 @@ public class CategoryServImpl implements CategoryServ {
     }
 
     @Override
-    public Result categoryDelete(BigInteger categoryId) {
+    public Result labelDelete(BigInteger labelId) {
         try {
-            if(categoryMapper.selectById(categoryId) == null){
+            if(labelMapper.selectById(labelId) == null){
                 return Result.error("删除失败，标签不存在");
             } 
             // Id不为空
-            categoryMapper.deleteById(categoryId);
+            labelMapper.deleteById(labelId);
             return Result.success("标签删除成功");
         } catch (Exception e) {
             return Result.error("标签删除失败："+e);
@@ -53,33 +53,33 @@ public class CategoryServImpl implements CategoryServ {
     }
 
     @Override
-    public Result categoryUpdate(BigInteger categoryId, String title,String summary,Integer status) {
+    public Result labelUpdate(BigInteger labelId, String title,String summary,Integer status) {
         try {
-            Category category = categoryMapper.selectById(categoryId);
-            if(category == null){
+            Label label = labelMapper.selectById(labelId);
+            if(label == null){
                 return Result.error(title+"标签不存在");
             }
             if(!"".equals(title)){
-                category.setTitle(title);
+                label.setTitle(title);
             }
             if(!"".equals(summary)){
-                category.setSummary(summary);
+                label.setSummary(summary);
             }
             if(status != null){
-                category.setStatus(status);
+                label.setStatus(status);
             }
-            categoryMapper.update(category);
+            labelMapper.update(label);
             return Result.success(title+"标签更新成功");
         } catch (Exception e) {
             return Result.error("标签更新失败："+e);
         }
     }
     @Override
-    public Result categorySelectById(BigInteger categoryId) {
+    public Result labelSelectById(BigInteger labelId) {
         try {
-            Category category =  categoryMapper.selectById(categoryId);
+            Label label =  labelMapper.selectById(labelId);
             log.info("标签查询成功");
-            return Result.success(category);
+            return Result.success(label);
         } catch (Exception e) {
             log.error("标签查询失败"+e);
             return Result.error("标签查询失败");
@@ -87,11 +87,11 @@ public class CategoryServImpl implements CategoryServ {
     }
 
     @Override
-    public Result categorySelectByTitle(String title) {
+    public Result labelSelectByTitle(String title) {
         try {
-            Category category =  categoryMapper.selectByTitle(title);
+            Label label =  labelMapper.selectByTitle(title);
             log.info("标签查询成功");
-            return Result.success(category);
+            return Result.success(label);
         } catch (Exception e) {
             log.error("标签查询失败"+e);
             return Result.error("标签查询失败");

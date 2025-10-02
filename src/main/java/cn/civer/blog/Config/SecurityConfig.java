@@ -26,10 +26,29 @@ public class SecurityConfig {
         return http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // 登录注册接口放行
                         .requestMatchers("/api/user/login", "/api/user/register").permitAll()
+                        // Swagger 相关接口（仅在非 prod 环境下放行）
+                        .requestMatchers(getSwaggerWhitelist()).permitAll()
+                        // 其他接口需要认证
                         .anyRequest().authenticated()
+                        //.anyRequest().permitAll()  // 临时放行所有请求
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
+    }
+    /**
+     * Swagger 白名单路径
+     */
+    private String[] getSwaggerWhitelist() {
+        return new String[]{
+            "/v3/api-docs/**",
+            "/swagger-ui/**",
+            "/swagger-ui.html",   // 可保留，兼容老版本
+            "/swagger-resources/**",
+            "/webjars/**",
+            "/favicon.ico",
+            "/.well-known/**"
+        };
     }
 }
