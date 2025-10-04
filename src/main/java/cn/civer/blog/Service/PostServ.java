@@ -16,6 +16,7 @@ public interface PostServ {
 //    Result postDeleteByTitle(String title);
     Result postDeleteByCategory(BigInteger categoryId);
     Result postDeleteByLabel(BigInteger labelId);
+    Result postDeleteByUserId(BigInteger userId);
     // 修改文章
     Result postUpdate(BigInteger postId,PostDTO postDTO);
     // 查询文章

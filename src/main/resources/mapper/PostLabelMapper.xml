@@ -5,6 +5,16 @@
         insert into t_post_label(post_id, label_id, create_time, update_time)
         VALUES (#{postId},#{labelId},NOW(),NOW())
     </insert>
+    <insert id="insertIfNotExist" parameterType="map">
+        INSERT INTO t_post_label (post_id, label_id, create_time, update_time)
+        SELECT #{postId}, #{labelId}, NOW(), NOW()
+        FROM DUAL
+        WHERE NOT EXISTS (
+            SELECT 1 FROM t_post_label
+            WHERE post_id = #{postId} AND label_id = #{labelId}
+        )
+    </insert>
+
     <update id="update">
         UPDATE t_post_label
         SET label_id = #{labelId},

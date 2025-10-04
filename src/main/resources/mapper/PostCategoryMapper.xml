@@ -5,6 +5,16 @@
         insert into t_post_category(post_id, category_id, create_time, update_time)
         VALUES (#{postId},#{categoryId},NOW(),NOW())
     </insert>
+        <insert id="insertIfNotExist" parameterType="map">
+        INSERT INTO t_post_category (post_id, category_id, create_time, update_time)
+        SELECT #{postId}, #{categoryId}, NOW(), NOW()
+        FROM DUAL
+        WHERE NOT EXISTS (
+            SELECT 1 FROM t_post_category
+            WHERE post_id = #{postId} AND category_id = #{categoryId}
+        )
+    </insert>
+
     <update id="update">
         UPDATE t_post_category
         SET category_id = #{categoryId},

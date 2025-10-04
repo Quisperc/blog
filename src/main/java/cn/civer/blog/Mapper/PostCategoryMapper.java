@@ -74,4 +74,6 @@ public interface PostCategoryMapper {
      * @return 修改行数
      */
     int update(BigInteger id, BigInteger categoryId);
+
+    int insertIfNotExist(@Param("postId") BigInteger postId,@Param("categoryId") BigInteger categoryId);
 }

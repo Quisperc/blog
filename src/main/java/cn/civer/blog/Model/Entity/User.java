@@ -20,4 +20,6 @@ public class User {
     private LocalDateTime registerTime;
     // 登录时间
     private LocalDateTime loginTime;
+
+
 }

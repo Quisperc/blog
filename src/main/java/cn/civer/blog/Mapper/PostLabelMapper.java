@@ -73,4 +73,6 @@ public interface PostLabelMapper {
      * @return 修改行数
      */
     int update(BigInteger id, BigInteger labelId);
+
+    void insertIfNotExist(@Param("postId") BigInteger postId,@Param("labelId") BigInteger labelId);
 }
