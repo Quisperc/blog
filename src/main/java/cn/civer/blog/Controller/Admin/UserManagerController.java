@@ -18,7 +18,6 @@ public class UserManagerController {
     @Autowired
     private PostServ postServ;
 
-
     @PreAuthorize("hasRole('manager')")
     @DeleteMapping("/delete")
     public Result userDelete(@RequestParam BigInteger userId){

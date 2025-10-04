@@ -1,5 +1,6 @@
 package cn.civer.blog.Config.Security;
 
+import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Utils.RedisUtils;
 import com.alibaba.fastjson2.JSON;
@@ -100,7 +101,7 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             // 步骤5: 检查令牌是否在黑名单中（已注销）
-            if (redisUtils.isExsits("jwt:blacklist:" + token)) {
+            if (redisUtils.isExsits(MessageConstants.JWT_BLACKLIST + token)) {
                 log.warn("令牌已在黑名单中: {}", token);
                 sendError(response, "TOKEN_INVALID");
                 return;
@@ -201,7 +202,7 @@ public class JwtFilter extends OncePerRequestFilter {
      */
     private List<SimpleGrantedAuthority> getAuthorities(String userId, Claims claims) {
         // 步骤1: 尝试从Redis缓存获取权限信息
-        String rolesJson = redisUtils.get("user:roles:" + userId);
+        String rolesJson = redisUtils.get(MessageConstants.JWT_USER_PRIVILEGE + userId);
 
         if (rolesJson != null) {
             // 步骤2: 缓存命中，解析权限列表
@@ -218,7 +219,7 @@ public class JwtFilter extends OncePerRequestFilter {
                     .toList();
 
             // 步骤4: 将权限信息缓存到Redis（24小时）
-            redisUtils.set("user:roles:" + userId, JSON.toJSONString(roles),
+            redisUtils.set(MessageConstants.JWT_USER_PRIVILEGE + userId, JSON.toJSONString(roles),
                           Duration.ofMinutes(24 * 60));
 
             log.debug("从JWT令牌解析权限并缓存，用户: {}，权限: {}", userId, roles);
