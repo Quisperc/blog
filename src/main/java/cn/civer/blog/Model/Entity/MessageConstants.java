@@ -7,6 +7,8 @@ public class MessageConstants {
     public static final String POST_UPDATE_FAILED = "文章更新失败";
     public static final String POST_DELETE_SUCCESS = "文章删除成功";
     public static final String POST_DELETE_FAILED = "文章删除失败";
+    public static final String POST_SELECT_FAILED = "文章查询失败";
+    public static final String POST_SELECT_SUCCESS = "文章查询成功";
 
     public static final String LABEL_INSERT_FAILED = "标签插入失败";
     public static final String LABEL_INSERT_SUCCESS = "标签插入成功";
@@ -30,8 +32,8 @@ public class MessageConstants {
     public static final String CATEGORY_EXIST = "分类已存在";
     public static final String CATEGORY_NOT_EXIST = "分类不存在";
 
-    public static final String USER_INSERT_FAILED = "用户插入失败";
-    public static final String USER_INSERT_SUCCESS = "用户插入成功";
+    public static final String USER_INSERT_FAILED = "用户注册失败";
+    public static final String USER_INSERT_SUCCESS = "用户注册成功";
     public static final String USER_UPDATE_SUCCESS = "用户更新成功";
     public static final String USER_UPDATE_FAILED = "用户更新失败";
     public static final String USER_DELETE_SUCCESS = "用户删除成功";
@@ -55,5 +57,23 @@ public class MessageConstants {
     public static final String FILE_SELECT_SUCCESS = "文件查询成功";
     public static final String FILE_EXIST = "文件已存在";
     public static final String FILE_NOT_EXIST = "文件不存在";
+
+    public static final String POST_LABEL_INSERT_FAILED = "文章-标签插入失败";
+    public static final String POST_LABEL_INSERT_SUCCESS = "文章-标签插入成功";
+    public static final String POST_LABEL_DELETE_SUCCESS = "文章-标签删除成功";
+    public static final String POST_LABEL_DELETE_FAILED = "文章-标签删除失败";
+    public static final String POST_LABEL_SELECT_FAILED = "文章-标签查询失败";
+    public static final String POST_LABEL_SELECT_SUCCESS = "文章-标签查询成功";
+    public static final String POST_LABEL_EXIST = "文章-标签已存在";
+    public static final String POST_LABEL_NOT_EXIST = "文章-标签不存在";
+
+    public static final String POST_CATEGORY_INSERT_FAILED = "文章-分类插入失败";
+    public static final String POST_CATEGORY_INSERT_SUCCESS = "文章-分类插入成功";
+    public static final String POST_CATEGORY_DELETE_SUCCESS = "文章-分类删除成功";
+    public static final String POST_CATEGORY_DELETE_FAILED = "文章-分类删除失败";
+    public static final String POST_CATEGORY_SELECT_FAILED = "文章-分类查询失败";
+    public static final String POST_CATEGORY_SELECT_SUCCESS = "文章-分类查询成功";
+    public static final String POST_CATEGORY_EXIST = "文章-分类已存在";
+    public static final String POST_CATEGORY_NOT_EXIST = "文章-分类不存在";
 }
 

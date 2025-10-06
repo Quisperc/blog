@@ -3,7 +3,6 @@ package cn.civer.blog.Service.Impl;
 import cn.civer.blog.Exception.BizException;
 import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Enum.Role;
-import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Model.Entity.User;
 import cn.civer.blog.Mapper.UserMapper;
 import cn.civer.blog.Utils.JwtTokenProvider;
@@ -40,12 +39,12 @@ public class UserServImpl implements UserServ {
      * @return 返回结果
      */
     @Override
-    public Result<?> getById(BigInteger id) {
+    public User getById(BigInteger id) {
         User user = userMapper.selectById(id);
         if (user == null) {
-            throw new BizException(MessageConstants.USER_NOT_EXIST);
+            throw new BizException(MessageConstants.USER_NOT_EXIST+": " + id);
         }
-        return Result.success(user);
+        return user;
     }
 
     /**
@@ -56,15 +55,16 @@ public class UserServImpl implements UserServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result removeById(BigInteger id) {
+    public Boolean removeById(BigInteger id) {
         User user = userMapper.selectById(id);
         // 判断用户是否存在
         if (user == null) {
             throw new BizException(MessageConstants.USER_NOT_EXIST + ": {}" + id);
         }
+        // 移除用户
         userMapper.deleteById(id);
         log.info(MessageConstants.USER_DELETE_SUCCESS + ": {}) ", user.getUsername());
-        return Result.success(MessageConstants.USER_DELETE_SUCCESS);
+        return Boolean.TRUE;
     }
 
     /**
@@ -76,7 +76,13 @@ public class UserServImpl implements UserServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result<String> userRegister(String username, String rawPassword) {
+    public Boolean userRegister(String username, String rawPassword) {
+        User userSelect =  userMapper.selectByUsername(username);
+        // 判断用户是否存在
+        if (userSelect != null) {
+            // 存在则无法注册
+            throw new BizException(MessageConstants.USER_EXIST + ": {}" + username);
+        }
         // 填写新用户表单信息
         User user = new User();
         user.setUsername(username);
@@ -85,8 +91,8 @@ public class UserServImpl implements UserServ {
         user.setRegisterTime(LocalDateTime.now());
         userMapper.insert(user);
         // 日志记录
-        log.info(MessageConstants.USER_INSERT_SUCCESS + ": {}", user.getUsername());
-        return Result.success(MessageConstants.USER_INSERT_SUCCESS);
+        log.info(MessageConstants.USER_INSERT_SUCCESS + ": {}", username);
+        return Boolean.TRUE;
     }
 
 
@@ -99,7 +105,7 @@ public class UserServImpl implements UserServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result userUpdateByUser(String username, String password) {
+    public Boolean userUpdateByUser(String username, String password) {
         // 校验权限
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
         BigInteger userId = new BigInteger(auth.getName());
@@ -108,6 +114,14 @@ public class UserServImpl implements UserServ {
         if (user == null) {
             throw new BizException(MessageConstants.USER_NOT_EXIST);
         }
+
+        // 判断用户是否存在
+        User userSelect =  userMapper.selectByUsername(username);
+        if (userSelect != null) {
+            // 存在则无法注册
+            throw new BizException(MessageConstants.USER_EXIST + ": {}" + username);
+        }
+
         // 用户名不为空则表明需要修改用户名
         if (!"".equals(username)) {
             user.setUsername(username);
@@ -118,7 +132,8 @@ public class UserServImpl implements UserServ {
         }
         // 更新用户
         userMapper.update(user);
-        return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
+        log.info(MessageConstants.USER_UPDATE_SUCCESS+": "+username);
+        return Boolean.TRUE;
     }
 
     /**
@@ -129,7 +144,7 @@ public class UserServImpl implements UserServ {
      * @return Result包jwt
      */
     @Override
-    public Result<String> userLogin(String username, String rawPassword) {
+    public String userLogin(String username, String rawPassword) {
         // 获取User对象
         User user = userMapper.selectByUsername(username);
         // 判断用户是否存在
@@ -153,29 +168,44 @@ public class UserServImpl implements UserServ {
             redisUtils.set(MessageConstants.JWT_USER_PRIVILEGE + user.getId(), JSON.toJSONString(priList), Duration.ofMinutes(24 * 60));
 
             log.info(MessageConstants.USER_LOGIN_SUCCESS+"({})！权限为" + priList, user.getUsername());
-            return Result.success(jwt);
+            return jwt;
         } else {
             throw new BizException(MessageConstants.USER_LOGIN_FAILED);
         }
     }
 
+    /**
+     * 用户退出登录
+     *
+     * @param token jwt
+     * @return 退出成功结果
+     */
     @Override
-    public Result userLogout(String token) {
+    public Boolean userLogout(String token) {
         // 加入黑名单，24*60保证jwt完全失效
         redisUtils.set(MessageConstants.JWT_BLACKLIST + token, "true", Duration.ofMinutes(24 * 60)); // 和 JWT 保持一致
         log.info("退出成功！token：" + token + "已失效！");
-        return Result.success(MessageConstants.USER_LOGOUT);
+        return Boolean.TRUE;
     }
 
+    /**
+     * 更新用户角色
+     *
+     * @param userId 用户Id
+     * @param role   用户角色
+     * @return 更新结果
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result userUpdateByAdmin(BigInteger userId, Role role) {
+    public Boolean userUpdateByAdmin(BigInteger userId, Role role) {
         User user = userMapper.selectById(userId);
         if (user == null) {
             throw new BizException(MessageConstants.USER_NOT_EXIST);
         }
+        // 设置用户角色
         user.setRole(role);
         userMapper.update(user);
-        return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
+        log.info(MessageConstants.USER_UPDATE_SUCCESS+": "+ userId);
+        return Boolean.TRUE;
     }
 }

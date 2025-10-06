@@ -53,7 +53,7 @@ public class PostServImpl implements PostServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result postAdd(PostDTO postDTO) {
+    public Boolean postAdd(PostDTO postDTO) {
         // 获取用户Id
         BigInteger authorId = getCurrentUserId();
         Post post = new Post();
@@ -66,14 +66,14 @@ public class PostServImpl implements PostServ {
         post.setSummary(postDTO.getSummary());
         postMapper.insert(post);
         BigInteger postId = post.getId();
-        log.info("成功插入文章：[{}] (ID: {})", post.getTitle(), postId);
+        log.info(MessageConstants.POST_ADD_SUCCESS + "：[{}] (ID: {})", post.getTitle(), postId);
 
         // 2️⃣ 分类处理
         for (CategoryDTO c : postDTO.getCategories()) {
             Category category = categoryServ.findOrCreate(c.getTitle(), c.getSummary(), authorId);
             log.info("准备插入文章分类映射：postId={}, categoryId={}", postId, category.getId());
             postCategoryMapper.insertIfNotExist(postId, category.getId());
-            log.info("绑定分类 [{}] -> 文章 [{}]", category.getTitle(), post.getTitle());
+            log.info(MessageConstants.POST_CATEGORY_INSERT_SUCCESS+": 绑定分类 [{}] -> 文章 [{}]", category.getTitle(), post.getTitle());
         }
 
         // 3️⃣ 标签处理
@@ -81,9 +81,9 @@ public class PostServImpl implements PostServ {
             Label label = labelServ.findOrCreate(l.getTitle(), l.getSummary(), authorId);
             log.info("准备插入文章标签映射：postId={}, labelId={}", postId, label.getId());
             postLabelMapper.insertIfNotExist(postId, label.getId());
-            log.info("绑定标签 [{}] -> 文章 [{}]", label.getTitle(), post.getTitle());
+            log.info(MessageConstants.POST_LABEL_INSERT_SUCCESS+": 绑定标签 [{}] -> 文章 [{}]", label.getTitle(), post.getTitle());
         }
-        return Result.success(MessageConstants.POST_ADD_SUCCESS);
+        return Boolean.TRUE;
     }
 
     /**
@@ -95,7 +95,7 @@ public class PostServImpl implements PostServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result postUpdate(BigInteger postId, PostDTO postDTO) {
+    public Boolean postUpdate(BigInteger postId, PostDTO postDTO) {
         // 获取用户Id
         BigInteger authorId = getCurrentUserId();
         // 1️⃣ 更新主表
@@ -116,22 +116,26 @@ public class PostServImpl implements PostServ {
         // 2️⃣ 重建分类关联
         if (!postDTO.getCategories().isEmpty()) {
             postCategoryMapper.deleteByPostId(postId);
+            log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS);
             for (CategoryDTO c : postDTO.getCategories()) {
                 Category category = categoryServ.findOrCreate(c.getTitle(), c.getSummary(), authorId);
                 postCategoryMapper.insertIfNotExist(postId, category.getId());
+                log.info(MessageConstants.POST_CATEGORY_INSERT_SUCCESS+": 绑定分类 [{}] -> 文章 [{}]", category.getTitle(), post.getTitle());
             }
         }
 
         // 3️⃣ 重建标签关联
         if (!postDTO.getLabels().isEmpty()) {
             postLabelMapper.deleteByPostId(postId);
+            log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS);
             for (LabelDTO l : postDTO.getLabels()) {
                 Label label = labelServ.findOrCreate(l.getTitle(), l.getSummary(), authorId);
                 postLabelMapper.insertIfNotExist(postId, label.getId());
+                log.info(MessageConstants.POST_LABEL_INSERT_SUCCESS+": 绑定标签 [{}] -> 文章 [{}]", label.getTitle(), post.getTitle());
             }
         }
         log.info(MessageConstants.POST_UPDATE_SUCCESS + " (ID:{}) ", postId);
-        return Result.success(MessageConstants.POST_UPDATE_SUCCESS);
+        return Boolean.TRUE;
     }
 
     /**
@@ -142,7 +146,7 @@ public class PostServImpl implements PostServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result postDeleteById(BigInteger id) {
+    public Boolean postDeleteById(BigInteger id) {
         // 每次调用方法时动态获取
         BigInteger authorId = getCurrentUserId();
         // 1. 文章删除成功
@@ -150,10 +154,11 @@ public class PostServImpl implements PostServ {
             log.info("文章(ID:{})已被 (用户:{}) 删除", id, authorId);
             // 2. 删除对应的文章-标签表/分类表
             postLabelMapper.deleteByPostId(id);
+            log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS);
             postCategoryMapper.deleteByPostId(id);
-            return Result.success(MessageConstants.POST_DELETE_SUCCESS);
+            log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS);
         }
-        return Result.error(MessageConstants.POST_DELETE_FAILED);
+        return Boolean.TRUE;
     }
 
     /**
@@ -164,25 +169,25 @@ public class PostServImpl implements PostServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result postDeleteByCategory(BigInteger categoryId) {
+    public Boolean postDeleteByCategory(BigInteger categoryId) {
         // 1. 查询包含该分类Id的文章
         List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
         // 2. 遍历postIds
         for (BigInteger postId : postIds) {
             // 3. 根据Id删除文章
             if (postMapper.deleteById(postId) == 1) {
-                log.info("删除文章(" + postId + ")成功");
+                log.info(MessageConstants.POST_DELETE_SUCCESS+": 文章ID({}) ",postId);
             }
             // 4. 根据Id删除文章-分类表
             if (postCategoryMapper.deleteByPostId(postId) == 1) {
-                log.info("删除文章(" + postId + ")-分类表成功");
+                log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS + ": 文章ID({})", postId);
             }
             // 5. 根据Id删除文章-标签表
             if (postLabelMapper.deleteByPostId(postId) == 1) {
-                log.info("删除文章(" + postId + ")-标签表成功");
+                log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS+": 文章ID({})", postId);
             }
         }
-        return Result.success("删除文章成功");
+        return Boolean.TRUE;
     }
 
     /**
@@ -192,23 +197,23 @@ public class PostServImpl implements PostServ {
      * @return 删除结果
      */
     @Transactional(rollbackFor = Exception.class)
-    public Result postDeleteByUserId(BigInteger userId) {
+    public Boolean postDeleteByUserId(BigInteger userId) {
         List<Post> posts = postMapper.selectByAuthorId(userId);
-        if (posts.isEmpty())
-            return Result.error("无文章");
         for (Post post : posts) {
             // 1. 文章删除成功
             if (postMapper.deleteById(post.getId()) == 1) {
-                log.info("文章(ID:" + post.getId() + ")已被删除");
+                log.info(MessageConstants.POST_DELETE_SUCCESS+": 文章(ID:{})", post.getId());
                 // 2. 删除对应的文章-标签表/分类表
                 postLabelMapper.deleteByPostId(post.getId());
+                log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS+": 文章ID({})", post.getId());
                 postCategoryMapper.deleteByPostId(post.getId());
+                log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS + ": 文章ID({})", post.getId());
             } else {
                 // 文章删除失败
-                log.warn("文章(ID:" + post.getId() + ")无法被删除");
+                log.warn(MessageConstants.POST_DELETE_FAILED+": 文章(ID:{})" , post.getId());
             }
         }
-        return Result.success();
+        return Boolean.TRUE;
     }
 
     /**
@@ -219,25 +224,25 @@ public class PostServImpl implements PostServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result postDeleteByLabel(BigInteger labelId) {
+    public Boolean postDeleteByLabel(BigInteger labelId) {
         // 1. 查询包含该分类Id的文章
         List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);
         // 2. 遍历postIds
         for (BigInteger postId : postIds) {
             // 3. 根据Id删除文章
             if (postMapper.deleteById(postId) == 1) {
-                log.info("删除文章(" + postId + ")成功");
+                log.info(MessageConstants.POST_DELETE_SUCCESS+": 文章ID({}) ",postId);
             }
             // 4. 根据Id删除文章-分类表
             if (postCategoryMapper.deleteByPostId(postId) == 1) {
-                log.info("删除文章(" + postId + ")-分类表成功");
+                log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS + ": 文章ID({})", postId);
             }
             // 5. 根据Id删除文章-标签表
             if (postLabelMapper.deleteByPostId(postId) == 1) {
-                log.info("删除文章(" + postId + ")-标签表成功");
+                log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS+": 文章ID({})", postId);
             }
         }
-        return Result.success("删除文章成功");
+        return Boolean.TRUE;
     }
 
     /*--------------------查询部分------------------------------------------------------*/
@@ -248,12 +253,13 @@ public class PostServImpl implements PostServ {
      * @return 文章列表
      */
     @Override
-    public Result postSelectAll() {
+    public List<Post> postSelectAll() {
         List<Post> posts = postMapper.selectAll();
-        if (posts.isEmpty())
-            return Result.success("无文章");
+//        if (posts.isEmpty())
+//            return Result.success("无文章");
         postAssembler.enrichPosts(posts);
-        return Result.success(posts);
+        log.info(MessageConstants.POST_SELECT_SUCCESS);
+        return posts;
     }
 
     /**
@@ -263,13 +269,14 @@ public class PostServImpl implements PostServ {
      * @return 查找结果
      */
     @Override
-    public Result postSelectById(BigInteger id) {
+    public Post postSelectById(BigInteger id) {
         // 设置文章其他信息
         Post post = postMapper.selectById(id);
         if (post == null)
-            return Result.error("文章不存在");
+            return null;
         postAssembler.enrichPost(post);
-        return Result.success(post);
+        log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",id);
+        return post;
     }
 
     /**
@@ -279,10 +286,11 @@ public class PostServImpl implements PostServ {
      * @return 查找结果
      */
     @Override
-    public Result postSelectByTitle(String title) {
+    public List<Post> postSelectByTitle(String title) {
         List<Post> posts = postMapper.selectByTitle(title);
         postAssembler.enrichPosts(posts);
-        return Result.success(posts);
+        log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章名: {}",title);
+        return posts;
     }
 
     /**
@@ -292,16 +300,17 @@ public class PostServImpl implements PostServ {
      * @return 查询文章的集合
      */
     @Override
-    public Result postSelectByCategory(BigInteger categoryId) {
+    public List<Post> postSelectByCategory(BigInteger categoryId) {
         List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
+        log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postIds);
         List<Post> posts = new ArrayList<>();
         for (BigInteger postId : postIds) {
             Post post = postMapper.selectById(postId);
             postAssembler.enrichPost(post);
             posts.add(post);
-            log.info("查找文章(" + post.getId() + ")成功");
+            log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postId);
         }
-        return Result.success(posts);
+        return posts;
     }
 
     /**
@@ -311,15 +320,16 @@ public class PostServImpl implements PostServ {
      * @return 查询文章的集合
      */
     @Override
-    public Result postSelectByLabel(BigInteger labelId) {
+    public List<Post> postSelectByLabel(BigInteger labelId) {
         List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);
+        log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postIds);
         List<Post> posts = new ArrayList<>();
         for (BigInteger postId : postIds) {
             Post post = postMapper.selectById(postId);
             postAssembler.enrichPost(post);
             posts.add(post);
-            log.info("查找文章(" + post.getId() + ")成功");
+            log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postId);
         }
-        return Result.success(posts);
+        return posts;
     }
 }

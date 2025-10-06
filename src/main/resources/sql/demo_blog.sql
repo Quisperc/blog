@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS t_user (
 -- 为 TiDB 创建索引
 # ALTER TABLE t_user ADD INDEX idx_viewer (viewer);
 # ALTER TABLE t_user ADD INDEX idx_register_time (register_time);
+
 # 文章表
 # Drop table t_post;
 CREATE TABLE IF NOT EXISTS t_post (
@@ -78,3 +79,13 @@ CREATE TABLE IF NOT EXISTS t_post_label (
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '更新时间',
     PRIMARY KEY (id)
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='文章-标签表';
+
+# 文件上传记录表
+CREATE TABLE IF NOT EXISTS t_file (
+    id BIGINT NOT NULL AUTO_INCREMENT COMMENT '文件ID',
+    origin_name VARCHAR(255) NOT NULL COMMENT '文件原始名',
+    author_id VARCHAR(255) NOT NULL COMMENT '作者ID',
+    objectKey VARCHAR(20) NOT NULL COMMENT '存储路径',
+    upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '上传时间',
+    PRIMARY KEY (id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='文件记录表';

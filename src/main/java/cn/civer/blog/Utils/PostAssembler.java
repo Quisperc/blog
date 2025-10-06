@@ -6,14 +6,16 @@ import cn.civer.blog.Mapper.PostCategoryMapper;
 import cn.civer.blog.Mapper.PostLabelMapper;
 import cn.civer.blog.Model.Entity.Category;
 import cn.civer.blog.Model.Entity.Label;
+import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Entity.Post;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-
+@Slf4j
 @Component
 public class PostAssembler {
 
@@ -35,14 +37,20 @@ public class PostAssembler {
         List<Category> categories = new ArrayList<>();
         for (BigInteger categoryId : categoryIds) {
             Category c = categoryMapper.selectById(categoryId);
-            if (c != null) categories.add(c);
+            if (c != null) {
+                categories.add(c);
+                log.info(MessageConstants.POST_CATEGORY_SELECT_SUCCESS+": 绑定分类 [{}] -> 文章 [{}]", c.getTitle(), post.getTitle());
+            }
         }
 
         // 组装 标签
         List<Label> labels = new ArrayList<>();
         for (BigInteger labelId : labelIds) {
             Label l = labelMapper.selectById(labelId);
-            if (l != null) labels.add(l);
+            if (l != null){
+                labels.add(l);
+                log.info(MessageConstants.POST_LABEL_SELECT_SUCCESS+": 绑定标签 [{}] -> 文章 [{}]", l.getTitle(), post.getTitle());
+            }
         }
 
         post.setCategorys(categories);

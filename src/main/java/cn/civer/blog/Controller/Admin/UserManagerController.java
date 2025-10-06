@@ -1,5 +1,6 @@
 package cn.civer.blog.Controller.Admin;
 
+import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Model.Enum.Role;
 import cn.civer.blog.Service.PostServ;
@@ -22,14 +23,15 @@ public class UserManagerController {
     @DeleteMapping("/delete")
     public Result userDelete(@RequestParam BigInteger userId){
         postServ.postDeleteByUserId(userId);
-        Result result = userServ.removeById(userId);
-        return result;
+        userServ.removeById(userId);
+        return Result.success(MessageConstants.USER_DELETE_SUCCESS);
     }
 
     @PreAuthorize("hasRole('manager')")
     @PutMapping("/update")
     public Result userUpdateByAdmin(@RequestParam BigInteger userId, @RequestParam Role role){
-        return userServ.userUpdateByAdmin(userId,role);
+        userServ.userUpdateByAdmin(userId,role);
+        return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
     }
 
 }

@@ -1,9 +1,9 @@
 package cn.civer.blog.Service.Impl;
 
+import cn.civer.blog.Exception.BizException;
 import cn.civer.blog.Mapper.CategoryMapper;
 import cn.civer.blog.Model.Entity.Category;
 import cn.civer.blog.Model.Entity.MessageConstants;
-import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Service.CategoryServ;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,10 @@ public class CategoryServImpl implements CategoryServ {
     @Autowired
     private CategoryMapper categoryMapper;
 
+    /**
+     * 返回用户ID
+     * @return 用户Id
+     */
     private BigInteger getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return new BigInteger(authentication.getName());
@@ -37,53 +41,82 @@ public class CategoryServImpl implements CategoryServ {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Category findOrCreate(String title, String summary, BigInteger authorId) {
+        
+        // 查询分类是否存在
         Category category = categoryMapper.selectByTitle(title);
         if (category != null) return category;
-
+        // 创建新分类
         Category newCategory = new Category();
         newCategory.setTitle(title);
         newCategory.setSummary(summary);
         newCategory.setAuthorId(authorId);
         categoryMapper.insert(newCategory);
+        
         log.info(MessageConstants.CATEGORY_INSERT_SUCCESS + ": {}", title);
         return newCategory;
     }
 
+    /**
+     * 插入分类
+     * @param title 分类标题
+     * @param summary 分类介绍
+     * @return 插入成功结果
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result categoryInsert(String title, String summary) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        BigInteger userId = new BigInteger(auth.getName());
+    public Boolean categoryInsert(String title, String summary) {
+        // 获取用户Id
+        BigInteger userId = getCurrentUserId();
+        // 查询分类是否存在
         Category category = categoryMapper.selectByTitle(title);
         if (category != null)
-            return Result.error(MessageConstants.CATEGORY_EXIST);
+            throw new BizException(MessageConstants.CATEGORY_EXIST);
 
+        // 创建新分类
         Category newcategory = new Category();
         newcategory.setAuthorId(userId); // 创作者ID
         newcategory.setTitle(title); // 分类标题
         newcategory.setSummary(summary); // 分类介绍
         categoryMapper.insert(newcategory);
-
-        return Result.success(MessageConstants.CATEGORY_INSERT_SUCCESS + ": {}", title);
+        
+        log.info(MessageConstants.CATEGORY_INSERT_SUCCESS + ": {}", title);
+        return Boolean.TRUE;
     }
 
+    /**
+     * 根据分类Id删除分类
+     *
+     * @param categoryId 分类Id
+     * @return 删除结果
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result categoryDelete(BigInteger categoryId) {
+    public Boolean categoryDelete(BigInteger categoryId) {
         if (categoryMapper.selectById(categoryId) == null) {
-            return Result.error(MessageConstants.CATEGORY_NOT_EXIST);
+            throw new BizException(MessageConstants.CATEGORY_NOT_EXIST+ ": " + categoryId);
         }
-        // Id不为空
+        // 删除分类
         categoryMapper.deleteById(categoryId);
-        return Result.success(MessageConstants.CATEGORY_DELETE_SUCCESS);
+        log.info(MessageConstants.CATEGORY_DELETE_SUCCESS + ": {}", categoryId);
+        return Boolean.TRUE;
     }
 
+    /**
+     * 更新分类
+     *
+     * @param categoryId 分类Id
+     * @param title   分类名
+     * @param summary 分类介绍
+     * @param status  分类状态
+     * @return 更新结果
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result categoryUpdate(BigInteger categoryId, String title, String summary, Integer status) {
+    public Boolean categoryUpdate(BigInteger categoryId, String title, String summary, Integer status) {
+        // 查询分类
         Category category = categoryMapper.selectById(categoryId);
         if (category == null) {
-            return Result.error(MessageConstants.CATEGORY_NOT_EXIST + ": {}", title);
+            throw new BizException(MessageConstants.CATEGORY_NOT_EXIST + ": " + title);
         }
         if (StringUtils.hasText(title)) {
             category.setTitle(title);
@@ -95,29 +128,48 @@ public class CategoryServImpl implements CategoryServ {
             category.setStatus(status);
         }
         categoryMapper.update(category);
-        return Result.success(MessageConstants.CATEGORY_UPDATE_SUCCESS);
+        log.info(MessageConstants.CATEGORY_UPDATE_SUCCESS + ": {}", title);
+        return Boolean.TRUE;
     }
 
+    /**
+     * 根据Id查询分类
+     *
+     * @param categoryId 分类Id
+     * @return 查询结果Category
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result categorySelectById(BigInteger categoryId) {
+    public Category categorySelectById(BigInteger categoryId) {
         Category category = categoryMapper.selectById(categoryId);
-        log.info(MessageConstants.CATEGORY_SELECT_SUCCESS);
-        return Result.success(category);
+        log.info(MessageConstants.CATEGORY_SELECT_SUCCESS+": {}",category.getTitle());
+        return category;
     }
 
+    /**
+     * 根据分类名查询分类
+     *
+     * @param title 分类名
+     * @return 分类
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result categorySelectByTitle(String title) {
+    public Category categorySelectByTitle(String title) {
         Category category = categoryMapper.selectByTitle(title);
-        log.info(MessageConstants.CATEGORY_SELECT_SUCCESS);
-        return Result.success(category);
+        log.info(MessageConstants.CATEGORY_SELECT_SUCCESS+": {}",title);
+        return category;
     }
 
+    /**
+     * 查询所有分类
+     *
+     * @return 所有分类
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result categorySelectByAll() {
+    public List<Category> categorySelectByAll() {
         List<Category> categorys = categoryMapper.selectAll();
-        return Result.success(categorys);
+        log.info(MessageConstants.CATEGORY_SELECT_SUCCESS);
+        return categorys;
     }
 }

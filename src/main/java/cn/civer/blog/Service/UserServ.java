@@ -1,6 +1,5 @@
 package cn.civer.blog.Service;
 
-import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Model.Entity.User;
 import cn.civer.blog.Model.Enum.Role;
 
@@ -11,13 +10,13 @@ public interface UserServ {
     // 用户登录
     // 用户注销
     // 用户信息更新
-    Result getById(BigInteger id);
-    Result removeById(BigInteger id);
+    User getById(BigInteger id);
+    Boolean removeById(BigInteger id);
     //Result removeByUsername(String username);
-    Result<String> userRegister(String username, String rawPassword);
-    Result userUpdateByUser(String username,String password);
-    Result<String> userLogin(String username, String rawPassword);
-    Result userLogout(String token);
+    Boolean userRegister(String username, String rawPassword);
+    Boolean userUpdateByUser(String username, String password);
+    String userLogin(String username, String rawPassword);
+    Boolean userLogout(String token);
 
-    Result userUpdateByAdmin(BigInteger userId, Role role);
+    Boolean userUpdateByAdmin(BigInteger userId, Role role);
 }

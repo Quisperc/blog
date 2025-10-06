@@ -1,9 +1,9 @@
 package cn.civer.blog.Service.Impl;
 
+import cn.civer.blog.Exception.BizException;
 import cn.civer.blog.Mapper.LabelMapper;
 import cn.civer.blog.Model.Entity.Label;
 import cn.civer.blog.Model.Entity.MessageConstants;
-import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Service.LabelServ;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +22,10 @@ public class LabelServImpl implements LabelServ {
     @Autowired
     private LabelMapper labelMapper;
 
+    /**
+     * 返回用户ID
+     * @return 用户Id
+     */
     private BigInteger getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return new BigInteger(authentication.getName());
@@ -37,53 +41,82 @@ public class LabelServImpl implements LabelServ {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Label findOrCreate(String title, String summary, BigInteger authorId) {
+
+        // 查询标签是否存在
         Label label = labelMapper.selectByTitle(title);
         if (label != null) return label;
-
+        // 创建新标签
         Label newLabel = new Label();
         newLabel.setTitle(title);
         newLabel.setSummary(summary);
         newLabel.setAuthorId(authorId);
         labelMapper.insert(newLabel);
+
         log.info(MessageConstants.LABEL_INSERT_SUCCESS + ": {}", title);
         return newLabel;
     }
 
+    /**
+     * 插入标签
+     * @param title 标签标题
+     * @param summary 标签介绍
+     * @return 插入成功结果
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result labelInsert(String title, String summary) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        BigInteger userId = new BigInteger(auth.getName());
+    public Boolean labelInsert(String title, String summary) {
+        // 获取用户Id
+        BigInteger userId = getCurrentUserId();
+        // 查询标签是否存在
         Label label = labelMapper.selectByTitle(title);
         if (label != null)
-            return Result.error(MessageConstants.LABEL_EXIST);
+            throw new BizException(MessageConstants.LABEL_EXIST);
 
+        // 创建新标签
         Label newlabel = new Label();
         newlabel.setAuthorId(userId); // 创作者ID
         newlabel.setTitle(title); // 标签标题
         newlabel.setSummary(summary); // 标签介绍
         labelMapper.insert(newlabel);
 
-        return Result.success(MessageConstants.LABEL_INSERT_SUCCESS + ": {}", title);
+        log.info(MessageConstants.LABEL_INSERT_SUCCESS + ": {}", title);
+        return Boolean.TRUE;
     }
 
+    /**
+     * 根据标签Id删除标签
+     *
+     * @param labelId 标签Id
+     * @return 删除结果
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result labelDelete(BigInteger labelId) {
+    public Boolean labelDelete(BigInteger labelId) {
         if (labelMapper.selectById(labelId) == null) {
-            return Result.error(MessageConstants.LABEL_NOT_EXIST);
+            throw new BizException(MessageConstants.LABEL_NOT_EXIST+ ": " + labelId);
         }
-        // Id不为空
+        // 删除标签
         labelMapper.deleteById(labelId);
-        return Result.success(MessageConstants.LABEL_DELETE_SUCCESS);
+        log.info(MessageConstants.LABEL_DELETE_SUCCESS + ": {}", labelId);
+        return Boolean.TRUE;
     }
 
+    /**
+     * 更新标签
+     *
+     * @param labelId 标签Id
+     * @param title   标签名
+     * @param summary 标签介绍
+     * @param status  标签状态
+     * @return 更新结果
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result labelUpdate(BigInteger labelId, String title, String summary, Integer status) {
+    public Boolean labelUpdate(BigInteger labelId, String title, String summary, Integer status) {
+        // 查询标签
         Label label = labelMapper.selectById(labelId);
         if (label == null) {
-            return Result.error(MessageConstants.LABEL_NOT_EXIST + ": {}", title);
+            throw new BizException(MessageConstants.LABEL_NOT_EXIST + ": " + title);
         }
         if (StringUtils.hasText(title)) {
             label.setTitle(title);
@@ -95,29 +128,48 @@ public class LabelServImpl implements LabelServ {
             label.setStatus(status);
         }
         labelMapper.update(label);
-        return Result.success(MessageConstants.LABEL_UPDATE_SUCCESS);
+        log.info(MessageConstants.LABEL_UPDATE_SUCCESS + ": {}", title);
+        return Boolean.TRUE;
     }
 
+    /**
+     * 根据Id查询标签
+     *
+     * @param labelId 标签Id
+     * @return 查询结果Label
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result labelSelectById(BigInteger labelId) {
+    public Label labelSelectById(BigInteger labelId) {
         Label label = labelMapper.selectById(labelId);
-        log.info(MessageConstants.LABEL_SELECT_SUCCESS);
-        return Result.success(label);
+        log.info(MessageConstants.LABEL_SELECT_SUCCESS+": {}",label.getTitle());
+        return label;
     }
 
+    /**
+     * 根据标签名查询标签
+     *
+     * @param title 标签名
+     * @return 标签
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result labelSelectByTitle(String title) {
+    public Label labelSelectByTitle(String title) {
         Label label = labelMapper.selectByTitle(title);
-        log.info(MessageConstants.LABEL_SELECT_SUCCESS);
-        return Result.success(label);
+        log.info(MessageConstants.LABEL_SELECT_SUCCESS+": {}",title);
+        return label;
     }
 
+    /**
+     * 查询所有标签
+     *
+     * @return 所有标签
+     */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Result labelSelectByAll() {
+    public List<Label> labelSelectByAll() {
         List<Label> labels = labelMapper.selectAll();
-        return Result.success(labels);
+        log.info(MessageConstants.LABEL_SELECT_SUCCESS);
+        return labels;
     }
 }

@@ -1,6 +1,7 @@
 package cn.civer.blog.Controller.Common;
 
 import cn.civer.blog.Mapper.LabelMapper;
+import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Service.LabelServ;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,29 +18,33 @@ public class LabelController {
     @PreAuthorize("hasRole('manager')")
     @PostMapping("/add")
     public Result labelAdd(String title, String summary){
-        return  labelServ.labelInsert(title,summary);
+        labelServ.labelInsert(title,summary);
+        return Result.success(MessageConstants.LABEL_INSERT_SUCCESS);
     }
     @PreAuthorize("hasRole('manager')")
     @DeleteMapping("/delete")
     public Result labelDelete(BigInteger labelId){
-        return labelServ.labelDelete(labelId);
+        labelServ.labelDelete(labelId);
+        return Result.success(MessageConstants.LABEL_DELETE_SUCCESS);
     }
     @PreAuthorize("hasRole('manager')")
     @PutMapping("/update")
     public Result labelUpdate(BigInteger labelId,String title, String summary,Integer status){
-        return labelServ.labelUpdate(labelId,title,summary,status);
+        labelServ.labelUpdate(labelId,title,summary,status);
+        return Result.success(MessageConstants.LABEL_UPDATE_SUCCESS);
     }
     @GetMapping("/selectBylabelId/{labelId}")
     public Result labelSelectById(@PathVariable BigInteger labelId){
-        return labelServ.labelSelectById(labelId);
+
+        return Result.success(labelServ.labelSelectById(labelId));
     }
 
     @GetMapping("/selectByTitle/{title}")
     public Result labelSelectByTitle(@PathVariable String title){
-        return labelServ.labelSelectByTitle(title);
+        return Result.success(labelServ.labelSelectByTitle(title));
     }
     @GetMapping("/select")
     public Result labelSelectByAll(){
-        return labelServ.labelSelectByAll();
+        return Result.success(labelServ.labelSelectByAll());
     }
 }

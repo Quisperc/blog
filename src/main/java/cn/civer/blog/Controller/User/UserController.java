@@ -1,5 +1,6 @@
 package cn.civer.blog.Controller.User;
 
+import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Service.UserServ;
 import cn.civer.blog.Utils.ObsUtils;
@@ -23,25 +24,28 @@ public class UserController {
     @PostMapping("/login")
     public Result userLogin(@RequestParam("username") String username,@RequestParam("password") String password){
         // 获取登录结果
-        return userServ.userLogin(username,password);
+        userServ.userLogin(username,password);
+        return Result.success(MessageConstants.USER_LOGIN_SUCCESS);
     }
-
-
 
     @PostMapping("/register")
     public Result userRegister(@RequestParam String username, @RequestParam String password){
-        return userServ.userRegister(username,password);
+        userServ.userRegister(username,password);
+        return Result.success(MessageConstants.USER_INSERT_SUCCESS);
     }
 
     @PreAuthorize("hasRole('viewer')")
     @PutMapping("/update")
     public Result userUpdateByUser(@RequestParam String username, @RequestParam String password){
-        return userServ.userUpdateByUser(username,password);
+        userServ.userUpdateByUser(username,password);
+        return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
+
     }
 
     @PostMapping("/logout")
-    public Result userUpdate(Authentication auth){
+    public Result userLogout(Authentication auth){
         // 获取已登录用户的凭证
-        return userServ.userLogout(auth.getCredentials().toString());
+        userServ.userLogout(auth.getCredentials().toString());
+        return Result.success(MessageConstants.USER_LOGOUT);
     }
 }
