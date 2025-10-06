@@ -1,6 +1,6 @@
 package cn.civer.blog.Config;
 
-import cn.civer.blog.Config.Security.JwtFilter;
+import jakarta.servlet.DispatcherType;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,6 +28,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // 登录注册接口放行
                         .requestMatchers("/api/user/login", "/api/user/register").permitAll()
+                        // 放行异步操作，确保流式文件异步下载正确
+                        .dispatcherTypeMatchers(DispatcherType.ASYNC).permitAll()
                         // Swagger 相关接口（仅在非 prod 环境下放行）
                         .requestMatchers(getSwaggerWhitelist()).permitAll()
                         // 其他接口需要认证

@@ -8,6 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.IOException;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -17,6 +19,13 @@ public class GlobalExceptionHandler {
     public Result handleException(Exception e) {
         log.error("系统异常：", e);
         return Result.error("服务器内部错误，请联系管理员。");
+    }
+
+    /** ✅ 捕获IO异常 */
+    @ExceptionHandler(IOException.class)
+    public Result handleIOException(IOException e) {
+        log.error("IO异常：", e);
+        return Result.error("IO操作异常。");
     }
 
     /** ✅ 数据库异常 */
@@ -46,5 +55,12 @@ public class GlobalExceptionHandler {
     public Result handleBizException(BizException e) {
         log.warn("业务异常：{}", e.getMessage());
         return Result.error(e.getMessage());
+    }
+
+    /** ✅ 文件异常 */
+    @ExceptionHandler(IllegalArgumentException.class)
+    public Result handleIllegalArgumentException(IllegalArgumentException e) {
+        log.warn("文件异常：{}", e.getMessage());
+        return Result.error("文件异常");
     }
 }

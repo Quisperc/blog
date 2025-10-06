@@ -4,7 +4,7 @@ import cn.civer.blog.Mapper.*;
 import cn.civer.blog.Model.DTO.*;
 import cn.civer.blog.Model.Entity.*;
 import cn.civer.blog.Service.CategoryServ;
-import cn.civer.blog.Service.Helper.PostAssembler;
+import cn.civer.blog.Utils.PostAssembler;
 import cn.civer.blog.Service.LabelServ;
 import cn.civer.blog.Service.PostServ;
 import lombok.extern.slf4j.Slf4j;

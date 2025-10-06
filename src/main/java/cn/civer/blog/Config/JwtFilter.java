@@ -1,7 +1,8 @@
-package cn.civer.blog.Config.Security;
+package cn.civer.blog.Config;
 
 import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Entity.Result;
+import cn.civer.blog.Utils.JwtTokenProvider;
 import cn.civer.blog.Utils.RedisUtils;
 import com.alibaba.fastjson2.JSON;
 import io.jsonwebtoken.Claims;

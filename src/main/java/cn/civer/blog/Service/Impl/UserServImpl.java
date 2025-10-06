@@ -6,7 +6,7 @@ import cn.civer.blog.Model.Enum.Role;
 import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Model.Entity.User;
 import cn.civer.blog.Mapper.UserMapper;
-import cn.civer.blog.Config.Security.JwtTokenProvider;
+import cn.civer.blog.Utils.JwtTokenProvider;
 import cn.civer.blog.Service.UserServ;
 import cn.civer.blog.Utils.PasswordUtils;
 import cn.civer.blog.Utils.PrivilegeUtils;

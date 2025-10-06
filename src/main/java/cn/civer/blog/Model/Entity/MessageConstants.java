@@ -37,14 +37,23 @@ public class MessageConstants {
     public static final String USER_DELETE_SUCCESS = "用户删除成功";
     public static final String USER_DELETE_FAILED = "用户删除失败";
     public static final String USER_SELECT_FAILED = "用户查询失败";
-    public static final String USER_SELECT_SUCCESS = "用户登录成功";
+    public static final String USER_SELECT_SUCCESS = "用户查询成功";
     public static final String USER_LOGIN_FAILED = "用户登录失败";
-    public static final String USER_LOGIN_SUCCESS = "用户查询成功";
+    public static final String USER_LOGIN_SUCCESS = "用户登录成功";
     public static final String USER_EXIST = "用户已存在";
     public static final String USER_NOT_EXIST = "用户不存在";
     public static final String USER_LOGOUT = "用户退出登录";
 
     public static final String JWT_BLACKLIST = "jwt:blacklist:";
     public static final String JWT_USER_PRIVILEGE = "user:roles:";
+
+    public static final String FILE_UPLOAD_FAILED = "文件插入失败";
+    public static final String FILE_UPLOAD_SUCCESS = "文件插入成功";
+    public static final String FILE_DELETE_SUCCESS = "文件删除成功";
+    public static final String FILE_DELETE_FAILED = "文件删除失败";
+    public static final String FILE_SELECT_FAILED = "文件查询失败";
+    public static final String FILE_SELECT_SUCCESS = "文件查询成功";
+    public static final String FILE_EXIST = "文件已存在";
+    public static final String FILE_NOT_EXIST = "文件不存在";
 }
 

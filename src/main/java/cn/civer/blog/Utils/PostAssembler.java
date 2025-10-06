@@ -1,4 +1,4 @@
-package cn.civer.blog.Service.Helper;
+package cn.civer.blog.Utils;
 
 import cn.civer.blog.Mapper.CategoryMapper;
 import cn.civer.blog.Mapper.LabelMapper;

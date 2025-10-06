@@ -1,4 +1,4 @@
-package cn.civer.blog.Config.Security;
+package cn.civer.blog.Utils;
 
 import cn.civer.blog.Config.Properties.JwtProperties;
 import io.jsonwebtoken.*;
