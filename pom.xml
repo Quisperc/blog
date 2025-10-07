@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cn.civer</groupId>
     <artifactId>blog</artifactId>
-    <version>1.0.1</version>
+    <version>1.2.1</version>
     <name>blog</name>
     <description>blog</description>
     <properties>

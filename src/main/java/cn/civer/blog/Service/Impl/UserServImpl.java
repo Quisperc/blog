@@ -14,6 +14,7 @@ import com.alibaba.fastjson2.JSON;
 import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -228,12 +229,14 @@ public class UserServImpl implements UserServ {
     /**
      * 定时清理已过期的token（每5分钟执行一次）
      */
-    @Scheduled(fixedRate = 300000) // 5分钟
+    // 标记异步方法
+    @Async("taskExecutor")
+    @Scheduled(fixedRate = 86400000) // 一天执行一次就可以了
     public void cleanupExpiredTokens() {
         long currentTime = Instant.now().getEpochSecond();
         // 移除所有分数（过期时间）小于当前时间的token
         redisUtils.removeFromZSetByScore(MessageConstants.JWT_BLACKLISTS, 0L, currentTime);
 
-        System.out.println("已清理过期的token黑名单记录");
+        log.info("已清理过期的token黑名单记录 | 执行线程：{}", Thread.currentThread().getName());
     }
 }
