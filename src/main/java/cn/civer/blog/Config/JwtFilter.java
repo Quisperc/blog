@@ -102,7 +102,13 @@ public class JwtFilter extends OncePerRequestFilter {
 
         try {
             // 步骤5: 检查令牌是否在黑名单中（已注销）
-            if (redisUtils.hasKey(MessageConstants.JWT_BLACKLIST + token)) {
+//            if (redisUtils.hasKey(MessageConstants.JWT_BLACKLIST + token)) {
+//                log.warn("令牌已在黑名单中: {}", token);
+//                sendError(response, MessageConstants.JWT_INVALID);
+//                return;
+//            }
+            // 改用Sorted模式，减少 redis 缓存列表
+            if (redisUtils.getZSet(MessageConstants.JWT_BLACKLISTS,token) != null) {
                 log.warn("令牌已在黑名单中: {}", token);
                 sendError(response, MessageConstants.JWT_INVALID);
                 return;

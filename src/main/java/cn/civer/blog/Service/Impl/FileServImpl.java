@@ -62,7 +62,7 @@ public class FileServImpl implements FileServ {
         // 3. 上传
         String url = obsUtils.uploadStream(file, objectKey);
 
-        // 4. TODO 可在数据库中记录文件信息（如文件名、URL、上传者）
+        // 4. 在数据库中记录文件信息（文件名、文件路径、上传者）
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         MyFile myFile = new MyFile();
         myFile.setOriginName(file.getOriginalFilename());

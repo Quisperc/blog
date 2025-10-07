@@ -36,7 +36,7 @@ public class JwtTokenProvider {
                 .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs())) // 过期时间
                 .claim("username",username) // 声明username
                 .claim("roles",arrayList)
-                .setSubject(String.valueOf(userID))  // 主题：用户ID
+                .setSubject(String.valueOf(userID)) // 主题：用户ID
                 .setIssuedAt(new Date());            // 签发时间：现在
         return builder.compact();
     }

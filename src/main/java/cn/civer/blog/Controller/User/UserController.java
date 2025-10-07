@@ -39,7 +39,6 @@ public class UserController {
     public Result userUpdateByUser(@RequestParam String username, @RequestParam String password){
         userServ.userUpdateByUser(username,password);
         return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
-
     }
 
     @PostMapping("/logout")

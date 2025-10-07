@@ -122,6 +122,104 @@ public class RedisUtils {
     //- - - - - - - - - - - - - - - - - - - - -  set类型 - - - - - - - - - - - - - - - - - - - -
 
     /**
+     * 将数据放入有序集合set缓存
+     * @param key 键
+     * @param value 值
+     * @param score 分数（double）
+     */
+    public void zSet(String key, String value, Double score) {
+        redisTemplate.opsForZSet().add(key, value, score);
+    }
+    /**
+     * 将数据放入有序集合set缓存
+     * @param key 键
+     * @param value 值
+     * @param score 分数（double）
+     */
+    public void zSet(String key, String value, Long score) {
+        redisTemplate.opsForZSet().add(key, value, score);
+    }
+    /**
+     * 从有序集合set缓存获取 分数
+     * @param key 键
+     * @param value 值
+     * @return 分数
+     */
+    public Double getZSet(String key, String value) {
+        return redisTemplate.opsForZSet().score(key, value);
+    }
+
+    /**
+     * 获取有序集合zSet的值
+     * @param key zSet的key
+     * @param start 起点
+     * @param end 终点
+     * @return 符合条件的value
+     */
+    public Set<String> getZSetByRange(String key, long start, long end) {
+        return redisTemplate.opsForZSet().range(key, start, end);
+    }
+
+    /**
+     * 反向获取有序集合zSet的start - end 范围内的 值， 用于热度排名
+     * @param key zSet的key
+     * @param start 靠后的一位
+     * @param end 靠前的一位
+     * @return 新的Set集合
+     */
+    public Set<String> getRevZSetByRange(String key,Long start, Long end){
+        return redisTemplate.opsForZSet().reverseRange(key, start, end);
+    }
+
+    /**
+     * 操作分数
+     * @param key zSet的key
+     * @param value 待操作的值
+     * @param data 浮动的分数
+     * @return 操作后的分数
+     */
+    public Double increZSetScore(String key, String value, Long data){
+        return redisTemplate.opsForZSet().incrementScore(key,value,data);
+    }
+
+    /**
+     * 从有序集合zSet中移除
+     * @param key zSet的key
+     * @param value 值
+     */
+    public void removeFromZSet(String key, String value) {
+        redisTemplate.opsForZSet().remove(key, value);
+    }
+
+    /**
+     * 从有序集合zSet中移除分数在 start-end 区间的 值
+     * @param key zSet的key
+     * @param start 开始分数(Long)
+     * @param end 结束分数(Long)
+     */
+    public void removeFromZSetByScore(String key, Long start, Long end) {
+        redisTemplate.opsForZSet().removeRangeByScore(key, start, end);
+    }
+    /**
+     * 从有序集合zSet中移除分数在 start-end 区间的 值
+     * @param key zSet的key
+     * @param start 开始分数(Double)
+     * @param end 结束分数(Double)
+     */
+    public void removeFromZSetByScore(String key, Double start, Double end) {
+        redisTemplate.opsForZSet().removeRangeByScore(key, start, end);
+    }
+    /**
+     * 从有序集合zSet中移除
+     * @param key zSet的key
+     * @param start 开始点
+     * @param end 最后结束的时间
+     */
+    public void removeFromZSetByRange(String key, long start, long end) {
+        redisTemplate.opsForZSet().removeRange(key, start, end);
+    }
+
+    /**
      * 将数据放入set缓存
      * @param key 键
      * @param value 值

@@ -7,6 +7,7 @@ import cn.civer.blog.Service.CategoryServ;
 import cn.civer.blog.Utils.PostAssembler;
 import cn.civer.blog.Service.LabelServ;
 import cn.civer.blog.Service.PostServ;
+import cn.civer.blog.Utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -34,6 +35,8 @@ public class PostServImpl implements PostServ {
     private PostCategoryMapper postCategoryMapper;
     @Autowired
     private PostAssembler postAssembler;
+    @Autowired
+    private RedisUtils redisUtils;
 
     /**
      * 获取当前用户Id
@@ -218,7 +221,6 @@ public class PostServImpl implements PostServ {
 
     /**
      * 根据标签删除文章
-     *
      * @param labelId 标签
      * @return 删除结果
      */
@@ -265,12 +267,14 @@ public class PostServImpl implements PostServ {
     @Override
     public Boolean postIncreLikes(BigInteger postId) {
         postMapper.incrementLikes(postId);
+        redisUtils.increZSetScore(MessageConstants.REDIS_POST_LIKES,postId.toString(),1L);
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean postIncreViews(BigInteger postId) {
         postMapper.incrementViews(postId);
+        redisUtils.increZSetScore(MessageConstants.REDIS_POST_VIEWS,postId.toString(),1L);
         return Boolean.TRUE;
     }
 

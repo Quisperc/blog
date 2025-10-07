@@ -191,9 +191,10 @@ public class ObsUtils {
     public String generateFileUrl(String objectKey) {
         objectKey = cleanPath(objectKey);
         // URL格式: https://桶名.域名/对象名
-        // 根据你的端点配置调整，如果端点是包含域名的完整形式
+        // 根据端点配置调整，如果端点是包含域名的完整形式
         String endpoint = obsProperties.getEndpoint().replace("https://", "");
         //c return "https://" + obsProperties.getBucketName() + "." + endpoint + "/" + objectKey;
+        // URL格式: https://自定义域名/对象名
         return "https://" + obsProperties.getAccessUrl() + "/" + objectKey;
     }
     /**

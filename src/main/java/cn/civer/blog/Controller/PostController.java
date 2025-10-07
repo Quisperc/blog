@@ -70,17 +70,17 @@ public class PostController {
     }
     @PreAuthorize("hasRole('manager')")
     @PutMapping("/update")
-    public Result postUpdate(@RequestBody PostDTO postDTO, BigInteger postId){
+    public Result postUpdate(@RequestBody PostDTO postDTO,@RequestParam("postId") BigInteger postId){
         postServ.postUpdate(postId,postDTO);
         return Result.success(MessageConstants.POST_UPDATE_SUCCESS);
     }
     @PostMapping("/update/like")
-    public Result postUpdateLikes(BigInteger postId){
+    public Result postUpdateLikes(@RequestParam("postId") BigInteger postId){
         postServ.postIncreLikes(postId);
         return Result.success(MessageConstants.POST_LIKE_SUCCESS);
     }
     @PostMapping("/update/view")
-    public Result postUpdateViews(BigInteger postId){
+    public Result postUpdateViews(@RequestParam("postId") BigInteger postId){
         postServ.postIncreViews(postId);
         return Result.success(MessageConstants.POST_VIEW_SUCCESS);
     }

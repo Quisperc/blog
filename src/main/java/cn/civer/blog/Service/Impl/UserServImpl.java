@@ -11,8 +11,10 @@ import cn.civer.blog.Utils.PasswordUtils;
 import cn.civer.blog.Utils.PrivilegeUtils;
 import cn.civer.blog.Utils.RedisUtils;
 import com.alibaba.fastjson2.JSON;
+import io.jsonwebtoken.Claims;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -20,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigInteger;
 import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -31,6 +34,8 @@ public class UserServImpl implements UserServ {
     private UserMapper userMapper;
     @Autowired
     private RedisUtils redisUtils;
+    @Autowired
+    private JwtTokenProvider jwtTokenProvider;
 
     /**
      * 根据ID返回用户
@@ -182,16 +187,24 @@ public class UserServImpl implements UserServ {
      */
     @Override
     public Boolean userLogout(String token) {
+        Claims claims = JwtTokenProvider.parserToken(token);
+        Date expiration = claims.getExpiration();
+        Instant expirationInstant = expiration.toInstant();
+        // 剩余时间
+        // Duration leastExpirationDuration = Duration.between(Instant.now(), expirationInstant);
+        // Long leastExpirationLong = expiration.getTime() - System.currentTimeMillis();
+        Long ExpirationLong = expiration.getTime();
+
         // 加入黑名单，24*60保证jwt完全失效
-        redisUtils.sSet(MessageConstants.JWT_BLACKLIST,token);
-        redisUtils.set(MessageConstants.JWT_BLACKLIST + token, "true", Duration.ofMinutes(60 * 24)); // 和 JWT 保持一致
-        log.info("退出成功！token：" + token + "已失效！");
+        redisUtils.zSet(MessageConstants.JWT_BLACKLISTS,token,ExpirationLong);
+        // TODO 旧版本，可以删
+        // redisUtils.set(MessageConstants.JWT_BLACKLIST + token, "true", leastExpirationDuration);
+        log.info("用户ID：{}（{}）退出成功！token：{} 已失效！",claims.getSubject(),claims.get("username", String.class), token);
         return Boolean.TRUE;
     }
 
     /**
      * 更新用户角色
-     *
      * @param userId 用户Id
      * @param role   用户角色
      * @return 更新结果
@@ -206,7 +219,21 @@ public class UserServImpl implements UserServ {
         // 设置用户角色
         user.setRole(role);
         userMapper.update(user);
+        // 设置 Redis 缓存
+        redisUtils.set(MessageConstants.JWT_USER_PRIVILEGE + userId,PrivilegeUtils.getPri(user).toString(),Duration.ofMinutes(24 * 60));
         log.info(MessageConstants.USER_UPDATE_SUCCESS+": "+ userId);
         return Boolean.TRUE;
+    }
+
+    /**
+     * 定时清理已过期的token（每5分钟执行一次）
+     */
+    @Scheduled(fixedRate = 300000) // 5分钟
+    public void cleanupExpiredTokens() {
+        long currentTime = Instant.now().getEpochSecond();
+        // 移除所有分数（过期时间）小于当前时间的token
+        redisUtils.removeFromZSetByScore(MessageConstants.JWT_BLACKLISTS, 0L, currentTime);
+
+        System.out.println("已清理过期的token黑名单记录");
     }
 }

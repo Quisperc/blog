@@ -50,6 +50,9 @@ public class MessageConstants {
 
 
     public static final String JWT_BLACKLIST = "jwt:blacklist:";
+    public static final String JWT_BLACKLISTS = "jwt_blacklists";
+    public static final String REDIS_POST_VIEWS = "post_views_list";
+    public static final String REDIS_POST_LIKES = "post_likes_list";
     public static final String JWT_USER_PRIVILEGE = "user:roles:";
     public static final String JWT_INVALID = "TOKEN_INVALID";
     public static final String JWT_ERROR = "TOKEN_ERROR";
