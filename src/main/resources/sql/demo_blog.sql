@@ -24,7 +24,7 @@ CREATE TABLE IF NOT EXISTS t_post (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '文章ID',
     title VARCHAR(50) NOT NULL COMMENT '文章名',
     author_id VARCHAR(255) NOT NULL COMMENT '作者ID',
-    summary VARCHAR(20) NOT NULL COMMENT '梗概',
+    summary VARCHAR(100) NOT NULL COMMENT '梗概',
     likes INT DEFAULT 0 COMMENT '点赞',
     views INT DEFAULT 0 COMMENT '浏览次数',
     status INT DEFAULT 0 COMMENT '发布状态',
@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS t_category (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '分类ID',
     title VARCHAR(50) NOT NULL COMMENT '分类名',
     author_id VARCHAR(255) NOT NULL COMMENT '分类创建作者ID',
-    summary VARCHAR(20) NOT NULL COMMENT '分类介绍',
+    summary VARCHAR(100) NOT NULL COMMENT '分类介绍',
     status INT DEFAULT 0 COMMENT '启用状态',
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '创建时间',
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '更新时间',
@@ -52,7 +52,7 @@ CREATE TABLE IF NOT EXISTS t_label (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '标签ID',
     title VARCHAR(50) NOT NULL COMMENT '标签名',
     author_id VARCHAR(255) NOT NULL COMMENT '标签创建作者ID',
-    summary VARCHAR(20) COMMENT '标签介绍',
+    summary VARCHAR(100) COMMENT '标签介绍',
     status INT DEFAULT 0 COMMENT '启用状态',
     create_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '创建时间',
     update_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() ON UPDATE CURRENT_TIMESTAMP() COMMENT '更新时间',
@@ -81,11 +81,14 @@ CREATE TABLE IF NOT EXISTS t_post_label (
 )ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='文章-标签表';
 
 # 文件上传记录表
+# Drop table t_file;
 CREATE TABLE IF NOT EXISTS t_file (
     id BIGINT NOT NULL AUTO_INCREMENT COMMENT '文件ID',
     origin_name VARCHAR(255) NOT NULL COMMENT '文件原始名',
-    author_id VARCHAR(255) NOT NULL COMMENT '作者ID',
-    objectKey VARCHAR(20) NOT NULL COMMENT '存储路径',
+    author_id BIGINT NOT NULL COMMENT '作者ID',
+    object_key VARCHAR(255) NOT NULL COMMENT '存储路径',
     upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP() COMMENT '上传时间',
-    PRIMARY KEY (id)
+    PRIMARY KEY (id),
+    UNIQUE KEY uk_objectkey (object_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_bin COMMENT='文件记录表';
+ALTER TABLE t_file ADD INDEX idx_object_key (object_key);

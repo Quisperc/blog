@@ -183,7 +183,8 @@ public class UserServImpl implements UserServ {
     @Override
     public Boolean userLogout(String token) {
         // 加入黑名单，24*60保证jwt完全失效
-        redisUtils.set(MessageConstants.JWT_BLACKLIST + token, "true", Duration.ofMinutes(24 * 60)); // 和 JWT 保持一致
+        redisUtils.sSet(MessageConstants.JWT_BLACKLIST,token);
+        redisUtils.set(MessageConstants.JWT_BLACKLIST + token, "true", Duration.ofMinutes(60 * 24)); // 和 JWT 保持一致
         log.info("退出成功！token：" + token + "已失效！");
         return Boolean.TRUE;
     }

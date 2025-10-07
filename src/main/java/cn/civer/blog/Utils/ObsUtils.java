@@ -172,6 +172,7 @@ public class ObsUtils {
         ObjectListing result = obsClient.listObjects(obsProperties.getBucketName());
         return result;
     }
+    // TODO 修改文件名以及路径
 
     /**
      * 判断对象是否存在

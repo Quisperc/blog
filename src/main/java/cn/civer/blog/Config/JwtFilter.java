@@ -96,15 +96,15 @@ public class JwtFilter extends OncePerRequestFilter {
         // 步骤4: 验证令牌是否存在
         if (!StringUtils.hasLength(token)) {
             log.warn("请求未包含有效的JWT令牌: {}", requestURI);
-            sendError(response, "NOT_LOGIN");
+            sendError(response, MessageConstants.JWT_INVALID);
             return;
         }
 
         try {
             // 步骤5: 检查令牌是否在黑名单中（已注销）
-            if (redisUtils.isExsits(MessageConstants.JWT_BLACKLIST + token)) {
+            if (redisUtils.hasKey(MessageConstants.JWT_BLACKLIST + token)) {
                 log.warn("令牌已在黑名单中: {}", token);
-                sendError(response, "TOKEN_INVALID");
+                sendError(response, MessageConstants.JWT_INVALID);
                 return;
             }
 
@@ -129,7 +129,7 @@ public class JwtFilter extends OncePerRequestFilter {
         } catch (Exception e) {
             // 步骤10: 处理令牌解析异常
             log.error("JWT令牌解析失败，路径: {}，异常: {}", requestURI, e.getMessage(), e);
-            sendError(response, "NOT_LOGIN");
+            sendError(response, MessageConstants.JWT_ERROR);
         }
     }
 

@@ -5,7 +5,6 @@ import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Entity.Post;
 import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Service.PostServ;
-import org.apache.ibatis.annotations.Param;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +44,7 @@ public class PostController {
     }
     @GetMapping("/selectbypost/{postId}")
     public Result postSelectByPostId(@PathVariable BigInteger postId){
+        postServ.postIncreViews(postId);
         Post post = postServ.postSelectById(postId);
         return Result.success(post);
     }
@@ -73,5 +73,15 @@ public class PostController {
     public Result postUpdate(@RequestBody PostDTO postDTO, BigInteger postId){
         postServ.postUpdate(postId,postDTO);
         return Result.success(MessageConstants.POST_UPDATE_SUCCESS);
+    }
+    @PostMapping("/update/like")
+    public Result postUpdateLikes(BigInteger postId){
+        postServ.postIncreLikes(postId);
+        return Result.success(MessageConstants.POST_LIKE_SUCCESS);
+    }
+    @PostMapping("/update/view")
+    public Result postUpdateViews(BigInteger postId){
+        postServ.postIncreViews(postId);
+        return Result.success(MessageConstants.POST_VIEW_SUCCESS);
     }
 }

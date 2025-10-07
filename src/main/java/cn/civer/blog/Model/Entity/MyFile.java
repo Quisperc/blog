@@ -10,10 +10,10 @@ import java.time.LocalDateTime;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class File {
+public class MyFile {
     private BigInteger id;
     private String originName;
-    private String authorId;
+    private BigInteger authorId;
     private String objectKey;
     private LocalDateTime uploadTime;
 }

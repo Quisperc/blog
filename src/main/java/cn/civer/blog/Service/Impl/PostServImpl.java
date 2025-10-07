@@ -262,6 +262,18 @@ public class PostServImpl implements PostServ {
         return posts;
     }
 
+    @Override
+    public Boolean postIncreLikes(BigInteger postId) {
+        postMapper.incrementLikes(postId);
+        return Boolean.TRUE;
+    }
+
+    @Override
+    public Boolean postIncreViews(BigInteger postId) {
+        postMapper.incrementViews(postId);
+        return Boolean.TRUE;
+    }
+
     /**
      * 根据id查找文章
      *

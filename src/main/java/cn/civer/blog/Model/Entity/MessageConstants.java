@@ -9,6 +9,8 @@ public class MessageConstants {
     public static final String POST_DELETE_FAILED = "文章删除失败";
     public static final String POST_SELECT_FAILED = "文章查询失败";
     public static final String POST_SELECT_SUCCESS = "文章查询成功";
+    public static final String POST_LIKE_SUCCESS = "文章点赞成功";
+    public static final String POST_VIEW_SUCCESS = "文章浏览成功";
 
     public static final String LABEL_INSERT_FAILED = "标签插入失败";
     public static final String LABEL_INSERT_SUCCESS = "标签插入成功";
@@ -46,8 +48,11 @@ public class MessageConstants {
     public static final String USER_NOT_EXIST = "用户不存在";
     public static final String USER_LOGOUT = "用户退出登录";
 
+
     public static final String JWT_BLACKLIST = "jwt:blacklist:";
     public static final String JWT_USER_PRIVILEGE = "user:roles:";
+    public static final String JWT_INVALID = "TOKEN_INVALID";
+    public static final String JWT_ERROR = "TOKEN_ERROR";
 
     public static final String FILE_UPLOAD_FAILED = "文件插入失败";
     public static final String FILE_UPLOAD_SUCCESS = "文件插入成功";

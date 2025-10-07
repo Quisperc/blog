@@ -23,4 +23,6 @@ public interface PostServ {
     List<Post> postSelectByCategory(BigInteger categoryId);
     List<Post> postSelectByLabel(BigInteger labelId);
     List<Post> postSelectAll();
+    Boolean postIncreLikes(BigInteger postId);
+    Boolean postIncreViews(BigInteger postId);
 }

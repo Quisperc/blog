@@ -24,8 +24,8 @@ public class UserController {
     @PostMapping("/login")
     public Result userLogin(@RequestParam("username") String username,@RequestParam("password") String password){
         // 获取登录结果
-        userServ.userLogin(username,password);
-        return Result.success(MessageConstants.USER_LOGIN_SUCCESS);
+        String jwt =  userServ.userLogin(username,password);
+        return Result.success(jwt);
     }
 
     @PostMapping("/register")
