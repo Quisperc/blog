@@ -1,5 +1,6 @@
 package cn.civer.blog.Mapper;
 
+import cn.civer.blog.Model.DTO.UserDTO;
 import cn.civer.blog.Model.Entity.User;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
@@ -7,13 +8,16 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.math.BigInteger;
+import java.util.List;
 
 @Mapper
 public interface UserMapper {
     // 根据ID查询用户
     @Select("select * from t_user where id = #{id}")
     User selectById(@Param("id") BigInteger id);
-
+    // 查询所有用户
+    @Select("select * from t_user")
+    List<UserDTO> selectUsers();
     /**
      * 根据用户名username查询用户
      * @param username 用户名

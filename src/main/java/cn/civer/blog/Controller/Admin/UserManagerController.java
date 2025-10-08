@@ -21,7 +21,7 @@ public class UserManagerController {
 
     @PreAuthorize("hasRole('manager')")
     @DeleteMapping("/delete")
-    public Result userDelete(@RequestParam BigInteger userId){
+    public Result userDelete(@RequestParam("userId") BigInteger userId){
         postServ.postDeleteByUserId(userId);
         userServ.removeById(userId);
         return Result.success(MessageConstants.USER_DELETE_SUCCESS);
@@ -29,9 +29,15 @@ public class UserManagerController {
 
     @PreAuthorize("hasRole('manager')")
     @PutMapping("/update")
-    public Result userUpdateByAdmin(@RequestParam BigInteger userId, @RequestParam Role role){
+    public Result userUpdateByAdmin(@RequestParam("userId") BigInteger userId, @RequestParam("role") Role role){
         userServ.userUpdateByAdmin(userId,role);
         return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
     }
 
+    @PreAuthorize("hasRole('manager')")
+    @PutMapping("/selectAll")
+    public Result userSelectAll(){
+        // userServ.getUsers();
+        return Result.success(userServ.getUsers());
+    }
 }

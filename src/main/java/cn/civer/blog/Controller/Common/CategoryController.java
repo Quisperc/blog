@@ -16,30 +16,32 @@ public class CategoryController {
     private CategoryServ categoryServ;
     @PreAuthorize("hasRole('manager')")
     @PostMapping("/add")
-    public Result categoryAdd(String title, String summary){
-        categoryServ.categoryInsert(title,summary);
+    public Result categoryAdd(@RequestParam("title") String title){
+        categoryServ.categoryInsert(title);
         return Result.success(MessageConstants.CATEGORY_INSERT_SUCCESS);
     }
     @PreAuthorize("hasRole('manager')")
     @DeleteMapping("/delete")
-    public Result categoryDelete(BigInteger categoryId){
+    public Result categoryDelete(@RequestParam("categoryId")BigInteger categoryId){
         categoryServ.categoryDelete(categoryId);
         return Result.success(MessageConstants.CATEGORY_DELETE_SUCCESS);
     }
     @PreAuthorize("hasRole('manager')")
     @PutMapping("/update")
-    public Result categoryUpdate(BigInteger categoryId,String title, String summary,Integer status){
-        categoryServ.categoryUpdate(categoryId,title,summary,status);
+    public Result categoryUpdate(@RequestParam("categoryId") BigInteger categoryId,
+                                 @RequestParam("title")String title,
+                                 @RequestParam("status")Integer status){
+        categoryServ.categoryUpdate(categoryId,title,status);
         return Result.success(MessageConstants.CATEGORY_UPDATE_SUCCESS);
     }
     @GetMapping("/selectBycategoryId/{categoryId}")
-    public Result categorySelectById(@PathVariable BigInteger categoryId){
+    public Result categorySelectById(@PathVariable("categoryId") BigInteger categoryId){
         
         return Result.success(categoryServ.categorySelectById(categoryId));
     }
 
     @GetMapping("/selectByTitle/{title}")
-    public Result categorySelectByTitle(@PathVariable String title){
+    public Result categorySelectByTitle(@PathVariable("title") String title){
         return Result.success(categoryServ.categorySelectByTitle(title));
     }
     @GetMapping("/select")

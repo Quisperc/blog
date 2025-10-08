@@ -1,6 +1,8 @@
 package cn.civer.blog.Model.Entity;
 
-public class MessageConstants {
+import java.io.Serializable;
+
+public class MessageConstants implements Serializable {
     public static final String POST_ADD_SUCCESS = "文章保存成功";
     public static final String POST_ADD_FAILED = "文章保存失败";
     public static final String POST_UPDATE_SUCCESS = "文章更新成功";

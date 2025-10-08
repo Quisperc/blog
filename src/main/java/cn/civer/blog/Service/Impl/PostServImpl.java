@@ -9,6 +9,9 @@ import cn.civer.blog.Service.LabelServ;
 import cn.civer.blog.Service.PostServ;
 import cn.civer.blog.Utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -54,6 +57,7 @@ public class PostServImpl implements PostServ {
      * @param postDTO 文章DTO
      * @return 插入结果
      */
+    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postAdd(PostDTO postDTO) {
@@ -73,7 +77,7 @@ public class PostServImpl implements PostServ {
 
         // 2️⃣ 分类处理
         for (CategoryDTO c : postDTO.getCategories()) {
-            Category category = categoryServ.findOrCreate(c.getTitle(), c.getSummary(), authorId);
+            Category category = categoryServ.findOrCreate(c.getTitle(), authorId);
             log.info("准备插入文章分类映射：postId={}, categoryId={}", postId, category.getId());
             postCategoryMapper.insertIfNotExist(postId, category.getId());
             log.info(MessageConstants.POST_CATEGORY_INSERT_SUCCESS+": 绑定分类 [{}] -> 文章 [{}]", category.getTitle(), post.getTitle());
@@ -81,7 +85,7 @@ public class PostServImpl implements PostServ {
 
         // 3️⃣ 标签处理
         for (LabelDTO l : postDTO.getLabels()) {
-            Label label = labelServ.findOrCreate(l.getTitle(), l.getSummary(), authorId);
+            Label label = labelServ.findOrCreate(l.getTitle(), authorId);
             log.info("准备插入文章标签映射：postId={}, labelId={}", postId, label.getId());
             postLabelMapper.insertIfNotExist(postId, label.getId());
             log.info(MessageConstants.POST_LABEL_INSERT_SUCCESS+": 绑定标签 [{}] -> 文章 [{}]", label.getTitle(), post.getTitle());
@@ -96,6 +100,7 @@ public class PostServImpl implements PostServ {
      * @param postDTO 文章DTO
      * @return 修改结果
      */
+    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postUpdate(BigInteger postId, PostDTO postDTO) {
@@ -121,7 +126,7 @@ public class PostServImpl implements PostServ {
             postCategoryMapper.deleteByPostId(postId);
             log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS);
             for (CategoryDTO c : postDTO.getCategories()) {
-                Category category = categoryServ.findOrCreate(c.getTitle(), c.getSummary(), authorId);
+                Category category = categoryServ.findOrCreate(c.getTitle(), authorId);
                 postCategoryMapper.insertIfNotExist(postId, category.getId());
                 log.info(MessageConstants.POST_CATEGORY_INSERT_SUCCESS+": 绑定分类 [{}] -> 文章 [{}]", category.getTitle(), post.getTitle());
             }
@@ -132,7 +137,7 @@ public class PostServImpl implements PostServ {
             postLabelMapper.deleteByPostId(postId);
             log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS);
             for (LabelDTO l : postDTO.getLabels()) {
-                Label label = labelServ.findOrCreate(l.getTitle(), l.getSummary(), authorId);
+                Label label = labelServ.findOrCreate(l.getTitle(), authorId);
                 postLabelMapper.insertIfNotExist(postId, label.getId());
                 log.info(MessageConstants.POST_LABEL_INSERT_SUCCESS+": 绑定标签 [{}] -> 文章 [{}]", label.getTitle(), post.getTitle());
             }
@@ -144,21 +149,22 @@ public class PostServImpl implements PostServ {
     /**
      * 根据文章ID删除文章
      *
-     * @param id 文章Id
+     * @param postId 文章Id
      * @return 删除结果
      */
+    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean postDeleteById(BigInteger id) {
+    public Boolean postDeleteById(BigInteger postId) {
         // 每次调用方法时动态获取
         BigInteger authorId = getCurrentUserId();
         // 1. 文章删除成功
-        if (postMapper.deleteById(id) == 1) {
-            log.info("文章(ID:{})已被 (用户:{}) 删除", id, authorId);
+        if (postMapper.deleteById(postId) == 1) {
+            log.info("文章(ID:{})已被 (用户:{}) 删除", postId, authorId);
             // 2. 删除对应的文章-标签表/分类表
-            postLabelMapper.deleteByPostId(id);
+            postLabelMapper.deleteByPostId(postId);
             log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS);
-            postCategoryMapper.deleteByPostId(id);
+            postCategoryMapper.deleteByPostId(postId);
             log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS);
         }
         return Boolean.TRUE;
@@ -170,6 +176,7 @@ public class PostServImpl implements PostServ {
      * @param categoryId 分类
      * @return 删除结果
      */
+    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postDeleteByCategory(BigInteger categoryId) {
@@ -199,6 +206,7 @@ public class PostServImpl implements PostServ {
      * @param userId 用户Id
      * @return 删除结果
      */
+    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     public Boolean postDeleteByUserId(BigInteger userId) {
         List<Post> posts = postMapper.selectByAuthorId(userId);
@@ -224,6 +232,7 @@ public class PostServImpl implements PostServ {
      * @param labelId 标签
      * @return 删除结果
      */
+    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postDeleteByLabel(BigInteger labelId) {
@@ -254,11 +263,10 @@ public class PostServImpl implements PostServ {
      *
      * @return 文章列表
      */
+    @Cacheable(value = "posts")
     @Override
     public List<Post> postSelectAll() {
         List<Post> posts = postMapper.selectAll();
-//        if (posts.isEmpty())
-//            return Result.success("无文章");
         postAssembler.enrichPosts(posts);
         log.info(MessageConstants.POST_SELECT_SUCCESS);
         return posts;
@@ -281,17 +289,18 @@ public class PostServImpl implements PostServ {
     /**
      * 根据id查找文章
      *
-     * @param id 文章id
+     * @param postId 文章id
      * @return 查找结果
      */
+    @Cacheable(value = "postsById", key = "#postId")
     @Override
-    public Post postSelectById(BigInteger id) {
+    public Post postSelectById(BigInteger postId) {
         // 设置文章其他信息
-        Post post = postMapper.selectById(id);
+        Post post = postMapper.selectById(postId);
         if (post == null)
             return null;
         postAssembler.enrichPost(post);
-        log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",id);
+        log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postId);
         return post;
     }
 
@@ -301,6 +310,7 @@ public class PostServImpl implements PostServ {
      * @param title 文章名
      * @return 查找结果
      */
+    @Cacheable(value = "postsByTitle", key = "#title")
     @Override
     public List<Post> postSelectByTitle(String title) {
         List<Post> posts = postMapper.selectByTitle(title);
@@ -315,6 +325,7 @@ public class PostServImpl implements PostServ {
      * @param categoryId 分类Id
      * @return 查询文章的集合
      */
+    @Cacheable(value = "postsByCategory", key = "#categoryId")
     @Override
     public List<Post> postSelectByCategory(BigInteger categoryId) {
         List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
@@ -335,6 +346,7 @@ public class PostServImpl implements PostServ {
      * @param labelId 标签
      * @return 查询文章的集合
      */
+    @Cacheable(value = "postsByLabel", key = "#labelId")
     @Override
     public List<Post> postSelectByLabel(BigInteger labelId) {
         List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);

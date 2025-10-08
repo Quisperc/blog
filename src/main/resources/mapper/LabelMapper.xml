@@ -2,8 +2,8 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="cn.civer.blog.Mapper.LabelMapper">
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
-        insert into t_label(title, author_id, summary, status, create_time, update_time)
-        VALUES (#{title},#{authorId},#{summary},#{status},now(),now())
+        insert into t_label(title, author_id, status, create_time, update_time)
+        VALUES (#{title},#{authorId},#{status},now(),now())
     </insert>
     <update id="update">
         UPDATE t_label
@@ -13,9 +13,6 @@
             </if>
             <if test="authorId != null and authorId != ''">
                 author_id = #{authorId},
-            </if>
-            <if test="summary != null and summary != ''">
-                summary = #{summary},
             </if>
             <if test="status != null and status != ''">
                 status = #{status},

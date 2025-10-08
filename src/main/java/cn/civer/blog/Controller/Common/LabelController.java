@@ -17,30 +17,32 @@ public class LabelController {
     private LabelServ labelServ;
     @PreAuthorize("hasRole('manager')")
     @PostMapping("/add")
-    public Result labelAdd(String title, String summary){
-        labelServ.labelInsert(title,summary);
+    public Result labelAdd(@RequestParam("title") String title){
+        labelServ.labelInsert(title);
         return Result.success(MessageConstants.LABEL_INSERT_SUCCESS);
     }
     @PreAuthorize("hasRole('manager')")
     @DeleteMapping("/delete")
-    public Result labelDelete(BigInteger labelId){
+    public Result labelDelete(@RequestParam("labelId") BigInteger labelId){
         labelServ.labelDelete(labelId);
         return Result.success(MessageConstants.LABEL_DELETE_SUCCESS);
     }
     @PreAuthorize("hasRole('manager')")
     @PutMapping("/update")
-    public Result labelUpdate(BigInteger labelId,String title, String summary,Integer status){
-        labelServ.labelUpdate(labelId,title,summary,status);
+    public Result labelUpdate(@RequestParam("labelId")BigInteger labelId,
+                              @RequestParam("title")String title,
+                              @RequestParam("status")Integer status){
+        labelServ.labelUpdate(labelId,title,status);
         return Result.success(MessageConstants.LABEL_UPDATE_SUCCESS);
     }
     @GetMapping("/selectBylabelId/{labelId}")
-    public Result labelSelectById(@PathVariable BigInteger labelId){
+    public Result labelSelectById(@PathVariable("labelId") BigInteger labelId){
 
         return Result.success(labelServ.labelSelectById(labelId));
     }
 
     @GetMapping("/selectByTitle/{title}")
-    public Result labelSelectByTitle(@PathVariable String title){
+    public Result labelSelectByTitle(@PathVariable("title") String title){
         return Result.success(labelServ.labelSelectByTitle(title));
     }
     @GetMapping("/select")

@@ -26,40 +26,40 @@ public class PostController {
     }
     @PreAuthorize("hasRole('manager')")
     @DeleteMapping("/delete/{postId}")
-    public Result postDeleteByPostId(@PathVariable BigInteger postId){
+    public Result postDeleteByPostId(@PathVariable("postId") BigInteger postId){
         postServ.postDeleteById(postId);
         return Result.success(MessageConstants.POST_DELETE_SUCCESS);
     }
     @PreAuthorize("hasRole('manager')")
     @DeleteMapping("/deletebycategory/{categoryId}")
-    public Result postDeleteByCategoryId(@PathVariable BigInteger categoryId){
+    public Result postDeleteByCategoryId(@PathVariable("categoryId") BigInteger categoryId){
         postServ.postDeleteByCategory(categoryId);
         return Result.success(MessageConstants.POST_DELETE_SUCCESS);
     }
     @PreAuthorize("hasRole('manager')")
     @DeleteMapping("/deletebylabel/{labelId}")
-    public Result postDeleteByLabelId(@PathVariable BigInteger labelId){
+    public Result postDeleteByLabelId(@PathVariable("labelId") BigInteger labelId){
         postServ.postDeleteByLabel(labelId);
         return Result.success(MessageConstants.POST_DELETE_SUCCESS);
     }
     @GetMapping("/selectbypost/{postId}")
-    public Result postSelectByPostId(@PathVariable BigInteger postId){
+    public Result postSelectByPostId(@PathVariable("postId") BigInteger postId){
         postServ.postIncreViews(postId);
         Post post = postServ.postSelectById(postId);
         return Result.success(post);
     }
     @GetMapping("/selectbytitle/{title}")
-    public Result postSelectByTitle(@PathVariable String title){
+    public Result postSelectByTitle(@PathVariable("title") String title){
         List<Post> posts =  postServ.postSelectByTitle(title);
         return Result.success(posts);
     }
     @GetMapping("/selectbylabel/{labelId}")
-    public Result postSelectByLabelId(@PathVariable BigInteger labelId){
+    public Result postSelectByLabelId(@PathVariable("labelId") BigInteger labelId){
         List<Post> posts =  postServ.postSelectByLabel(labelId);
         return Result.success(posts);
     }
     @GetMapping("/selectbycategory/{categoryId}")
-    public Result postSelectByCategoryId(@PathVariable BigInteger categoryId){
+    public Result postSelectByCategoryId(@PathVariable("categoryId") BigInteger categoryId){
         List<Post> posts = postServ.postSelectByCategory(categoryId);
         return Result.success(posts);
     }
@@ -70,7 +70,8 @@ public class PostController {
     }
     @PreAuthorize("hasRole('manager')")
     @PutMapping("/update")
-    public Result postUpdate(@RequestBody PostDTO postDTO,@RequestParam("postId") BigInteger postId){
+    public Result postUpdate(@RequestBody PostDTO postDTO,
+                             @RequestParam("postId") BigInteger postId){
         postServ.postUpdate(postId,postDTO);
         return Result.success(MessageConstants.POST_UPDATE_SUCCESS);
     }

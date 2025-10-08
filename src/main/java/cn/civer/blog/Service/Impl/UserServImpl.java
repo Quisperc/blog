@@ -1,6 +1,7 @@
 package cn.civer.blog.Service.Impl;
 
 import cn.civer.blog.Exception.BizException;
+import cn.civer.blog.Model.DTO.UserDTO;
 import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Enum.Role;
 import cn.civer.blog.Model.Entity.User;
@@ -45,12 +46,28 @@ public class UserServImpl implements UserServ {
      * @return 返回结果
      */
     @Override
-    public User getById(BigInteger id) {
+    public UserDTO getById(BigInteger id) {
+        UserDTO userDTO = new UserDTO();
         User user = userMapper.selectById(id);
         if (user == null) {
             throw new BizException(MessageConstants.USER_NOT_EXIST+": " + id);
         }
-        return user;
+        userDTO.setId(user.getId());
+        userDTO.setUsername(user.getUsername());
+        userDTO.setRole(user.getRole());
+        userDTO.setUpdatedAt(user.getUpdatedAt());
+        userDTO.setCreatedAt(user.getCreatedAt());
+        return userDTO;
+    }
+    /**
+     * 返回所有用户
+     * @return 返回结果
+     */
+    @Transactional(rollbackFor = Exception.class)
+    @Override
+    public List<UserDTO> getUsers() {
+        List<UserDTO> userDTOS = userMapper.selectUsers();
+        return userDTOS;
     }
 
     /**
@@ -94,7 +111,7 @@ public class UserServImpl implements UserServ {
         user.setUsername(username);
         user.setPassword(PasswordUtils.encode(rawPassword));
         user.setRole(Role.viewer);
-        user.setRegisterTime(LocalDateTime.now());
+        // user.setCreatedAt(LocalDateTime.now());
         userMapper.insert(user);
         // 日志记录
         log.info(MessageConstants.USER_INSERT_SUCCESS + ": {}", username);
@@ -164,8 +181,6 @@ public class UserServImpl implements UserServ {
         // 校验密码
         // 将密码加密后与获取到的密码进行匹配
         if (PasswordUtils.matches(rawPassword, user.getPassword())) {
-            // 更新登录时间
-            user.setLoginTime(LocalDateTime.now());
             // 获取用户权限
             List<String> priList = PrivilegeUtils.getPri(user);
             // 匹配成功则生成jwt并返回登录成功消息

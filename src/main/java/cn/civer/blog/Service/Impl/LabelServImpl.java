@@ -34,13 +34,12 @@ public class LabelServImpl implements LabelServ {
     /**
      * 获取标签
      * @param title    标题
-     * @param summary  介绍
      * @param authorId 作者Id
      * @return 标签
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Label findOrCreate(String title, String summary, BigInteger authorId) {
+    public Label findOrCreate(String title, BigInteger authorId) {
 
         // 查询标签是否存在
         Label label = labelMapper.selectByTitle(title);
@@ -48,7 +47,6 @@ public class LabelServImpl implements LabelServ {
         // 创建新标签
         Label newLabel = new Label();
         newLabel.setTitle(title);
-        newLabel.setSummary(summary);
         newLabel.setAuthorId(authorId);
         labelMapper.insert(newLabel);
 
@@ -59,12 +57,11 @@ public class LabelServImpl implements LabelServ {
     /**
      * 插入标签
      * @param title 标签标题
-     * @param summary 标签介绍
      * @return 插入成功结果
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean labelInsert(String title, String summary) {
+    public Boolean labelInsert(String title) {
         // 获取用户Id
         BigInteger userId = getCurrentUserId();
         // 查询标签是否存在
@@ -76,7 +73,6 @@ public class LabelServImpl implements LabelServ {
         Label newlabel = new Label();
         newlabel.setAuthorId(userId); // 创作者ID
         newlabel.setTitle(title); // 标签标题
-        newlabel.setSummary(summary); // 标签介绍
         labelMapper.insert(newlabel);
 
         log.info(MessageConstants.LABEL_INSERT_SUCCESS + ": {}", title);
@@ -106,13 +102,12 @@ public class LabelServImpl implements LabelServ {
      *
      * @param labelId 标签Id
      * @param title   标签名
-     * @param summary 标签介绍
      * @param status  标签状态
      * @return 更新结果
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean labelUpdate(BigInteger labelId, String title, String summary, Integer status) {
+    public Boolean labelUpdate(BigInteger labelId, String title, Integer status) {
         // 查询标签
         Label label = labelMapper.selectById(labelId);
         if (label == null) {
@@ -120,9 +115,6 @@ public class LabelServImpl implements LabelServ {
         }
         if (StringUtils.hasText(title)) {
             label.setTitle(title);
-        }
-        if (StringUtils.hasText(summary)) {
-            label.setSummary(summary);
         }
         if (status != null) {
             label.setStatus(status);

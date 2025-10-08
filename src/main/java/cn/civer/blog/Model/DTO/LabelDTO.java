@@ -2,8 +2,10 @@ package cn.civer.blog.Model.DTO;
 
 import lombok.Data;
 
+import java.io.Serializable;
+
 @Data
-public class LabelDTO {
+public class LabelDTO implements Serializable {
     private String title;
     private String summary;
 }

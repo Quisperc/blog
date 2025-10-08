@@ -2,13 +2,14 @@ package cn.civer.blog.Model.Entity;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
 @Data
-public class Post {
+public class Post implements Serializable {
     private BigInteger id;
     // 标题
     private String title;

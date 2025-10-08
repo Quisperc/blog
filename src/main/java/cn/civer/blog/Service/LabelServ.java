@@ -6,10 +6,10 @@ import java.math.BigInteger;
 import java.util.List;
 
 public interface LabelServ {
-    public Label findOrCreate(String title, String summary, BigInteger authorId);
-    Boolean labelInsert(String title,String summary);
+    Label findOrCreate(String title, BigInteger authorId);
+    Boolean labelInsert(String title);
     Boolean labelDelete(BigInteger labelId);
-    Boolean labelUpdate(BigInteger labelId, String title, String summary, Integer status);
+    Boolean labelUpdate(BigInteger labelId, String title, Integer status);
     Label labelSelectById(BigInteger labelId);
     Label labelSelectByTitle(String title);
     List<Label> labelSelectByAll();

@@ -6,10 +6,10 @@ import java.math.BigInteger;
 import java.util.List;
 
 public interface CategoryServ {
-    public Category findOrCreate(String title, String summary, BigInteger authorId);
-    Boolean categoryInsert(String title,String summary);
+    public Category findOrCreate(String title, BigInteger authorId);
+    Boolean categoryInsert(String title);
     Boolean categoryDelete(BigInteger categoryId);
-    Boolean categoryUpdate(BigInteger categoryId, String title, String summary, Integer status);
+    Boolean categoryUpdate(BigInteger categoryId, String title, Integer status);
     Category categorySelectById(BigInteger categoryId);
     Category categorySelectByTitle(String title);
     List<Category> categorySelectByAll();

@@ -22,25 +22,29 @@ public class UserController {
     @Autowired
     private UserServ userServ;
     @PostMapping("/login")
-    public Result userLogin(@RequestParam("username") String username,@RequestParam("password") String password){
+    public Result userLogin(@RequestParam("username") String username,
+                            @RequestParam("password") String password){
         // 获取登录结果
         String jwt =  userServ.userLogin(username,password);
         return Result.success(jwt);
     }
 
     @PostMapping("/register")
-    public Result userRegister(@RequestParam String username, @RequestParam String password){
+    public Result userRegister(@RequestParam("username") String username,
+                               @RequestParam("password") String password){
         userServ.userRegister(username,password);
         return Result.success(MessageConstants.USER_INSERT_SUCCESS);
     }
 
     @PreAuthorize("hasRole('viewer')")
     @PutMapping("/update")
-    public Result userUpdateByUser(@RequestParam String username, @RequestParam String password){
+    public Result userUpdateByUser(@RequestParam("username") String username,
+                                   @RequestParam("password") String password){
         userServ.userUpdateByUser(username,password);
         return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
     }
 
+    @PreAuthorize("hasRole('viewer')")
     @PostMapping("/logout")
     public Result userLogout(Authentication auth){
         // 获取已登录用户的凭证

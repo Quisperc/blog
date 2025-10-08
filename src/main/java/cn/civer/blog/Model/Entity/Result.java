@@ -4,9 +4,11 @@ import cn.civer.blog.Model.Enum.Status;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.io.Serializable;
+
 @Slf4j
 @Data
-public class Result<T> {
+public class Result<T> implements Serializable {
     private Integer code;
     private String msg;
     private T data;

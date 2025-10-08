@@ -34,13 +34,12 @@ public class CategoryServImpl implements CategoryServ {
     /**
      * 获取分类
      * @param title    标题
-     * @param summary  介绍
      * @param authorId 作者Id
      * @return 分类
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Category findOrCreate(String title, String summary, BigInteger authorId) {
+    public Category findOrCreate(String title, BigInteger authorId) {
         
         // 查询分类是否存在
         Category category = categoryMapper.selectByTitle(title);
@@ -48,7 +47,6 @@ public class CategoryServImpl implements CategoryServ {
         // 创建新分类
         Category newCategory = new Category();
         newCategory.setTitle(title);
-        newCategory.setSummary(summary);
         newCategory.setAuthorId(authorId);
         categoryMapper.insert(newCategory);
         
@@ -64,7 +62,7 @@ public class CategoryServImpl implements CategoryServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean categoryInsert(String title, String summary) {
+    public Boolean categoryInsert(String title) {
         // 获取用户Id
         BigInteger userId = getCurrentUserId();
         // 查询分类是否存在
@@ -76,7 +74,6 @@ public class CategoryServImpl implements CategoryServ {
         Category newcategory = new Category();
         newcategory.setAuthorId(userId); // 创作者ID
         newcategory.setTitle(title); // 分类标题
-        newcategory.setSummary(summary); // 分类介绍
         categoryMapper.insert(newcategory);
         
         log.info(MessageConstants.CATEGORY_INSERT_SUCCESS + ": {}", title);
@@ -112,7 +109,7 @@ public class CategoryServImpl implements CategoryServ {
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public Boolean categoryUpdate(BigInteger categoryId, String title, String summary, Integer status) {
+    public Boolean categoryUpdate(BigInteger categoryId, String title, Integer status) {
         // 查询分类
         Category category = categoryMapper.selectById(categoryId);
         if (category == null) {
@@ -120,9 +117,6 @@ public class CategoryServImpl implements CategoryServ {
         }
         if (StringUtils.hasText(title)) {
             category.setTitle(title);
-        }
-        if (StringUtils.hasText(summary)) {
-            category.setSummary(summary);
         }
         if (status != null) {
             category.setStatus(status);
