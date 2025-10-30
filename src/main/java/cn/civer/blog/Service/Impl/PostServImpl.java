@@ -10,7 +10,6 @@ import cn.civer.blog.Service.PostServ;
 import cn.civer.blog.Utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,6 +17,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.cache.CacheManager;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -41,6 +42,15 @@ public class PostServImpl implements PostServ {
     @Autowired
     private RedisUtils redisUtils;
 
+    // 注入接口类型的代理引用，用于触发 Spring 的缓存切面（避免自调用忽略缓存）
+    @Autowired
+    @Lazy
+    private PostServ postServProxy;
+
+    // 注入 CacheManager 用于对单个缓存键执行程序化的驱逐/置入（避免全量清理）
+    @Autowired
+    private CacheManager cacheManager;
+
     /**
      * 获取当前用户Id
      *
@@ -57,7 +67,7 @@ public class PostServImpl implements PostServ {
      * @param postDTO 文章DTO
      * @return 插入结果
      */
-    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
+    @CacheEvict(value = {"posts", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postAdd(PostDTO postDTO) {
@@ -73,6 +83,11 @@ public class PostServImpl implements PostServ {
         post.setSummary(postDTO.getSummary());
         postMapper.insert(post);
         BigInteger postId = post.getId();
+        // 将新文章写入 postsById 缓存（局部缓存填充，避免后续立刻穿透）
+        postAssembler.enrichPost(post);
+        if (cacheManager.getCache("postsById") != null) {
+            cacheManager.getCache("postsById").put(postId, post);
+        }
         log.info(MessageConstants.POST_ADD_SUCCESS + "：[{}] (ID: {})", post.getTitle(), postId);
 
         // 2️⃣ 分类处理
@@ -100,7 +115,7 @@ public class PostServImpl implements PostServ {
      * @param postDTO 文章DTO
      * @return 修改结果
      */
-    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
+    @CacheEvict(value = {"posts", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postUpdate(BigInteger postId, PostDTO postDTO) {
@@ -120,6 +135,11 @@ public class PostServImpl implements PostServ {
             post.setStatus(postDTO.getStatus());
 
         postMapper.update(post);
+
+        // 在更新后程序化地驱逐该文章的 postsById 缓存键（比清理整个 postsById 更精确）
+        if (cacheManager.getCache("postsById") != null) {
+            cacheManager.getCache("postsById").evict(postId);
+        }
 
         // 2️⃣ 重建分类关联
         if (!postDTO.getCategories().isEmpty()) {
@@ -152,7 +172,7 @@ public class PostServImpl implements PostServ {
      * @param postId 文章Id
      * @return 删除结果
      */
-    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
+    @CacheEvict(value = {"posts", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postDeleteById(BigInteger postId) {
@@ -166,6 +186,10 @@ public class PostServImpl implements PostServ {
             log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS);
             postCategoryMapper.deleteByPostId(postId);
             log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS);
+            // 程序化驱逐 postsById 缓存中对应条目
+            if (cacheManager.getCache("postsById") != null) {
+                cacheManager.getCache("postsById").evict(postId);
+            }
         }
         return Boolean.TRUE;
     }
@@ -176,7 +200,7 @@ public class PostServImpl implements PostServ {
      * @param categoryId 分类
      * @return 删除结果
      */
-    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
+    @CacheEvict(value = {"posts", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postDeleteByCategory(BigInteger categoryId) {
@@ -196,6 +220,10 @@ public class PostServImpl implements PostServ {
             if (postLabelMapper.deleteByPostId(postId) == 1) {
                 log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS+": 文章ID({})", postId);
             }
+            // 程序化驱逐 postsById 中对应的条目
+            if (cacheManager.getCache("postsById") != null) {
+                cacheManager.getCache("postsById").evict(postId);
+            }
         }
         return Boolean.TRUE;
     }
@@ -206,7 +234,7 @@ public class PostServImpl implements PostServ {
      * @param userId 用户Id
      * @return 删除结果
      */
-    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
+    @CacheEvict(value = {"posts", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     public Boolean postDeleteByUserId(BigInteger userId) {
         List<Post> posts = postMapper.selectByAuthorId(userId);
@@ -219,6 +247,10 @@ public class PostServImpl implements PostServ {
                 log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS+": 文章ID({})", post.getId());
                 postCategoryMapper.deleteByPostId(post.getId());
                 log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS + ": 文章ID({})", post.getId());
+                // 程序化驱逐 postsById
+                if (cacheManager.getCache("postsById") != null) {
+                    cacheManager.getCache("postsById").evict(post.getId());
+                }
             } else {
                 // 文章删除失败
                 log.warn(MessageConstants.POST_DELETE_FAILED+": 文章(ID:{})" , post.getId());
@@ -232,7 +264,7 @@ public class PostServImpl implements PostServ {
      * @param labelId 标签
      * @return 删除结果
      */
-    @CacheEvict(value = {"posts", "postsById", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
+    @CacheEvict(value = {"posts", "postsByTitle", "postsByCategory", "postsByLabel"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postDeleteByLabel(BigInteger labelId) {
@@ -251,6 +283,10 @@ public class PostServImpl implements PostServ {
             // 5. 根据Id删除文章-标签表
             if (postLabelMapper.deleteByPostId(postId) == 1) {
                 log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS+": 文章ID({})", postId);
+            }
+            // 程序化驱逐 postsById
+            if (cacheManager.getCache("postsById") != null) {
+                cacheManager.getCache("postsById").evict(postId);
             }
         }
         return Boolean.TRUE;
@@ -319,25 +355,53 @@ public class PostServImpl implements PostServ {
         return posts;
     }
 
+    /* ************************* 优化点：按分类/标签查询改为缓存文章ID列表 *************************
+     * 说明：将分类/标签到文章ID的映射缓存（轻量），并复用按ID缓存（postsById）来加载每篇文章，
+     * 避免把同一篇文章对象在多个集合缓存中重复存储，降低缓存失效的范围及存储成本。
+     */
+
+    /**
+     * 根据分类查询文章ID（缓存轻量的ID列表）
+     *
+     * @param categoryId 分类Id
+     * @return 文章ID列表
+     */
+    @Cacheable(value = "postIdsByCategory", key = "#categoryId")
+    public List<BigInteger> postIdsByCategory(BigInteger categoryId) {
+        return postCategoryMapper.selectByCategoryId(categoryId);
+    }
+
     /**
      * 根据分类查询文章
      *
      * @param categoryId 分类Id
      * @return 查询文章的集合
      */
-    @Cacheable(value = "postsByCategory", key = "#categoryId")
     @Override
     public List<Post> postSelectByCategory(BigInteger categoryId) {
-        List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
+        // 通过代理调用带缓存的方法以保证缓存生效
+        List<BigInteger> postIds = postServProxy.postIdsByCategory(categoryId);
         log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postIds);
         List<Post> posts = new ArrayList<>();
         for (BigInteger postId : postIds) {
-            Post post = postMapper.selectById(postId);
-            postAssembler.enrichPost(post);
-            posts.add(post);
-            log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postId);
+            Post post = postServProxy.postSelectById(postId); // 利用 postsById 缓存（通过代理触发）
+            if (post != null) {
+                posts.add(post);
+                log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postId);
+            }
         }
         return posts;
+    }
+
+    /**
+     * 根据标签查询文章ID（缓存轻量的ID列表）
+     *
+     * @param labelId 标签
+     * @return 文章ID列表
+     */
+    @Cacheable(value = "postIdsByLabel", key = "#labelId")
+    public List<BigInteger> postIdsByLabel(BigInteger labelId) {
+        return postLabelMapper.selectBylabelId(labelId);
     }
 
     /**
@@ -346,17 +410,18 @@ public class PostServImpl implements PostServ {
      * @param labelId 标签
      * @return 查询文章的集合
      */
-    @Cacheable(value = "postsByLabel", key = "#labelId")
     @Override
     public List<Post> postSelectByLabel(BigInteger labelId) {
-        List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);
+        // 通过代理调用带缓存的方法以保证缓存生效
+        List<BigInteger> postIds = postServProxy.postIdsByLabel(labelId);
         log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postIds);
         List<Post> posts = new ArrayList<>();
         for (BigInteger postId : postIds) {
-            Post post = postMapper.selectById(postId);
-            postAssembler.enrichPost(post);
-            posts.add(post);
-            log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postId);
+            Post post = postServProxy.postSelectById(postId); // 利用 postsById 缓存（通过代理触发）
+            if (post != null) {
+                posts.add(post);
+                log.info(MessageConstants.POST_SELECT_SUCCESS+": 文章ID: {}",postId);
+            }
         }
         return posts;
     }
