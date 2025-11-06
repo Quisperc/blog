@@ -104,4 +104,40 @@ public interface PostMapper {
      */
     @Delete("delete from t_post where id = #{id}")
     int deleteById(BigInteger id);
+
+    /**
+     * 批量按 delta 增加 views（用于异步从 Redis 刷盘）
+     * @param id 文章ID
+     * @param delta 增量
+     * @return 修改行数
+     */
+    @Update("UPDATE t_post SET views = IFNULL(views,0) + #{delta} WHERE id = #{id}")
+    int incrementViewsBy(@Param("id") BigInteger id, @Param("delta") long delta);
+
+    /**
+     * 批量按 delta 增加 likes（用于异步从 Redis 刷盘）
+     * @param id 文章ID
+     * @param delta 增量
+     * @return 修改行数
+     */
+    @Update("UPDATE t_post SET likes = IFNULL(likes,0) + #{delta} WHERE id = #{id}")
+    int incrementLikesBy(@Param("id") BigInteger id, @Param("delta") long delta);
+
+    /**
+     * 批量按 delta 更新 views（用于异步从 Redis 刷盘）
+     * @param id 文章ID
+     * @param delta 增量
+     * @return 修改行数
+     */
+    @Update("UPDATE t_post SET views = #{delta} WHERE id = #{id}")
+    int updateViewsBy(@Param("id") BigInteger id, @Param("delta") long delta);
+
+    /**
+     * 批量按 delta 更新 likes（用于异步从 Redis 刷盘）
+     * @param id 文章ID
+     * @param delta 增量
+     * @return 修改行数
+     */
+    @Update("UPDATE t_post SET likes = #{delta} WHERE id = #{id}")
+    int updateLikesBy(@Param("id") BigInteger id, @Param("delta") long delta);
 }

@@ -366,15 +366,41 @@ public class PostServImpl implements PostServ {
 
     @Override
     public Boolean postIncreLikes(BigInteger postId) {
-        postMapper.incrementLikes(postId);
-        redisUtils.increZSetScore(MessageConstants.REDIS_POST_LIKES,postId.toString(),1L);
+//        postMapper.incrementLikes(postId);
+//        redisUtils.increZSetScore(MessageConstants.REDIS_POST_LIKES,postId.toString(),1L);
+        // 写入 Redis 中的有序集合以记录增量（不立即写库）
+        redisUtils.increZSetScore(MessageConstants.REDIS_POST_LIKES, postId.toString(), 1L);
+        // 尝试更新本地缓存中的值以便前端即时看到变化（可选）
+        Cache postsById = cacheManager.getCache("postsById");
+        if (postsById != null) {
+            Post cached = postsById.get(postId, Post.class);
+            if (cached != null) {
+                Integer likes = cached.getLikes() == null ? 0 : cached.getLikes();
+                cached.setLikes(likes + 1);
+                postsById.put(postId, cached);
+            }
+        }
+        log.info(MessageConstants.POST_LIKE_SUCCESS+" (ID:{})", postId);
         return Boolean.TRUE;
     }
 
     @Override
     public Boolean postIncreViews(BigInteger postId) {
-        postMapper.incrementViews(postId);
-        redisUtils.increZSetScore(MessageConstants.REDIS_POST_VIEWS,postId.toString(),1L);
+//        postMapper.incrementViews(postId);
+//        redisUtils.increZSetScore(MessageConstants.REDIS_POST_VIEWS,postId.toString(),1L);
+        // 写入 Redis 有序集合记录浏览量增量（不立即写库）
+        redisUtils.increZSetScore(MessageConstants.REDIS_POST_VIEWS, postId.toString(), 1L);
+        // 尝试更新本地缓存中的值以便前端即时看到变化（可选）
+        Cache postsById = cacheManager.getCache("postsById");
+        if (postsById != null) {
+            Post cached = postsById.get(postId, Post.class);
+            if (cached != null) {
+                Integer views = cached.getViews() == null ? 0 : cached.getViews();
+                cached.setViews(views + 1);
+                postsById.put(postId, cached);
+            }
+        }
+        log.info(MessageConstants.POST_VIEW_SUCCESS+" (ID:{})", postId);
         return Boolean.TRUE;
     }
 
