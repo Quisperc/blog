@@ -21,4 +21,12 @@
         where id = #{id}
     </update>
 
+    <select id="selectByIds" parameterType="list" resultType="cn.civer.blog.Model.Entity.Label">
+        SELECT * FROM t_label
+        WHERE id IN
+        <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
 </mapper>

@@ -59,6 +59,21 @@ public interface PostLabelMapper {
     List<BigInteger> selectBylabelId(BigInteger labelId);
 
     /**
+     * 根据多个文章ID批量查询记录（用于批量组装）
+     * @param postIds 文章ID集合
+     * @return 包含 post_id 和 label_id 的 DTO 列表
+     */
+    @Select({"<script>",
+            "SELECT id as id, post_id as postId, label_id as labelId, create_time as createTime, update_time as updateTime",
+            "FROM t_post_label",
+            "WHERE post_id IN",
+            "<foreach item=\"item\" index=\"index\" collection=\"postIds\" open=\"(\" separator=\",\" close=\")\">",
+            "#{item}",
+            "</foreach>",
+            "</script>"})
+    List<cn.civer.blog.Model.DTO.PostLabelDTO> selectByPostIds(@Param("postIds") List<BigInteger> postIds);
+
+    /**
      * 根据文章ID和标签ID获取记录ID
      * @param postLabelDTO 文章标签DTO
      * @return 查询的记录ID

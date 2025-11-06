@@ -3,6 +3,7 @@ package cn.civer.blog.Mapper;
 import cn.civer.blog.Model.Entity.Label;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.math.BigInteger;
@@ -46,6 +47,13 @@ public interface LabelMapper {
      */
     @Select("select *from t_label")
     List<Label> selectAll();
+
+    /**
+     * 根据多个标签ID批量查询标签（用于批量组装）
+     * @param ids 标签ID列表
+     * @return 标签列表
+     */
+    List<Label> selectByIds(@Param("ids") List<BigInteger> ids);
 
     /**
      * 根据分类Id删除分类

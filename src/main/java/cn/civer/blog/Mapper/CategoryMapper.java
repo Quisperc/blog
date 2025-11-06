@@ -3,6 +3,7 @@ package cn.civer.blog.Mapper;
 import cn.civer.blog.Model.Entity.Category;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.math.BigInteger;
@@ -46,6 +47,13 @@ public interface CategoryMapper {
      */
     @Select("select *from t_category")
     List<Category> selectAll();
+
+    /**
+     * 根据多个分类ID批量查询分类（用于批量组装）
+     * @param ids 分类ID列表
+     * @return 分类列表
+     */
+    List<Category> selectByIds(@Param("ids") List<BigInteger> ids);
 
     /**
      * 根据分类Id删除分类

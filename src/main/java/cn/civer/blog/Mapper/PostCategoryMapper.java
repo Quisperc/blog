@@ -1,7 +1,6 @@
 package cn.civer.blog.Mapper;
 
 import cn.civer.blog.Model.DTO.PostCategoryDTO;
-import cn.civer.blog.Model.DTO.PostLabelDTO;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -58,6 +57,13 @@ public interface PostCategoryMapper {
      */
     @Select("select post_id from t_post_category where category_id = #{categoryId}")
     List<BigInteger> selectByCategoryId(BigInteger categoryId);
+
+    /**
+     * 根据多个文章ID批量查询记录（用于批量组装）
+     * @param postIds 文章ID集合
+     * @return 包含 post_id 和 category_id 的 DTO 列表
+     */
+    List<PostCategoryDTO> selectByPostIds(@Param("postIds") List<BigInteger> postIds);
 
     /**
      * 根据文章ID和分类ID获取记录

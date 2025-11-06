@@ -15,6 +15,15 @@
         )
     </insert>
 
+    <select id="selectByPostIds" parameterType="list" resultType="cn.civer.blog.Model.DTO.PostLabelDTO">
+        SELECT id as id, post_id as postId, label_id as labelId, create_time as createTime, update_time as updateTime
+        FROM t_post_label
+        WHERE post_id IN
+        <foreach item="item" index="index" collection="postIds" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </select>
+
     <update id="update">
         UPDATE t_post_label
         SET label_id = #{labelId},
