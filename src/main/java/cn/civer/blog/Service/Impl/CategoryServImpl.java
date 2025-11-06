@@ -12,8 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.CacheEvict;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -62,7 +60,6 @@ public class CategoryServImpl implements CategoryServ {
      * @return 插入成功结果
      */
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"categories", "categoriesById", "categoriesByTitle"}, allEntries = true)
     @Override
     public Boolean categoryInsert(String title) {
         // 获取用户Id
@@ -89,7 +86,6 @@ public class CategoryServImpl implements CategoryServ {
      * @return 删除结果
      */
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"categories", "categoriesById", "categoriesByTitle"}, allEntries = true)
     @Override
     public Boolean categoryDelete(BigInteger categoryId) {
         if (categoryMapper.selectById(categoryId) == null) {
@@ -110,7 +106,6 @@ public class CategoryServImpl implements CategoryServ {
      * @return 更新结果
      */
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"categories", "categoriesById", "categoriesByTitle"}, allEntries = true)
     @Override
     public Boolean categoryUpdate(BigInteger categoryId, String title, Integer status) {
         // 查询分类
@@ -136,7 +131,6 @@ public class CategoryServImpl implements CategoryServ {
      * @return 查询结果Category
      */
     @Transactional(rollbackFor = Exception.class)
-    @Cacheable(value = "categoriesById", key = "#categoryId")
     @Override
     public Category categorySelectById(BigInteger categoryId) {
         Category category = categoryMapper.selectById(categoryId);
@@ -151,7 +145,6 @@ public class CategoryServImpl implements CategoryServ {
      * @return 分类
      */
     @Transactional(rollbackFor = Exception.class)
-    @Cacheable(value = "categoriesByTitle", key = "#title")
     @Override
     public Category categorySelectByTitle(String title) {
         Category category = categoryMapper.selectByTitle(title);
@@ -165,7 +158,6 @@ public class CategoryServImpl implements CategoryServ {
      * @return 所有分类
      */
     @Transactional(rollbackFor = Exception.class)
-    @Cacheable(value = "categories", key = "'all'")
     @Override
     public List<Category> categorySelectByAll() {
         List<Category> categorys = categoryMapper.selectAll();

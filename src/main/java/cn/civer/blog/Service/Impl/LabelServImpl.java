@@ -12,8 +12,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.CacheEvict;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -62,7 +60,6 @@ public class LabelServImpl implements LabelServ {
      * @return 插入成功结果
      */
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"labels", "labelsById", "labelsByTitle"}, allEntries = true)
     @Override
     public Boolean labelInsert(String title) {
         // 获取用户Id
@@ -79,6 +76,7 @@ public class LabelServImpl implements LabelServ {
         labelMapper.insert(newlabel);
 
         log.info(MessageConstants.LABEL_INSERT_SUCCESS + ": {}", title);
+
         return Boolean.TRUE;
     }
 
@@ -89,15 +87,17 @@ public class LabelServImpl implements LabelServ {
      * @return 删除结果
      */
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"labels", "labelsById", "labelsByTitle"}, allEntries = true)
     @Override
     public Boolean labelDelete(BigInteger labelId) {
         if (labelMapper.selectById(labelId) == null) {
             throw new BizException(MessageConstants.LABEL_NOT_EXIST+ ": " + labelId);
         }
         // 删除标签
+        // 读取标题以便驱逐
+        Label existing = labelMapper.selectById(labelId);
         labelMapper.deleteById(labelId);
         log.info(MessageConstants.LABEL_DELETE_SUCCESS + ": {}", labelId);
+
         return Boolean.TRUE;
     }
 
@@ -110,7 +110,6 @@ public class LabelServImpl implements LabelServ {
      * @return 更新结果
      */
     @Transactional(rollbackFor = Exception.class)
-    @CacheEvict(value = {"labels", "labelsById", "labelsByTitle"}, allEntries = true)
     @Override
     public Boolean labelUpdate(BigInteger labelId, String title, Integer status) {
         // 查询标签
@@ -118,6 +117,7 @@ public class LabelServImpl implements LabelServ {
         if (label == null) {
             throw new BizException(MessageConstants.LABEL_NOT_EXIST + ": " + title);
         }
+        String oldTitle = label.getTitle();
         if (StringUtils.hasText(title)) {
             label.setTitle(title);
         }
@@ -126,6 +126,7 @@ public class LabelServImpl implements LabelServ {
         }
         labelMapper.update(label);
         log.info(MessageConstants.LABEL_UPDATE_SUCCESS + ": {}", title);
+
         return Boolean.TRUE;
     }
 
@@ -136,7 +137,6 @@ public class LabelServImpl implements LabelServ {
      * @return 查询结果Label
      */
     @Transactional(rollbackFor = Exception.class)
-    @Cacheable(value = "labelsById", key = "#labelId")
     @Override
     public Label labelSelectById(BigInteger labelId) {
         Label label = labelMapper.selectById(labelId);
@@ -151,7 +151,6 @@ public class LabelServImpl implements LabelServ {
      * @return 标签
      */
     @Transactional(rollbackFor = Exception.class)
-    @Cacheable(value = "labelsByTitle", key = "#title")
     @Override
     public Label labelSelectByTitle(String title) {
         Label label = labelMapper.selectByTitle(title);
@@ -165,7 +164,6 @@ public class LabelServImpl implements LabelServ {
      * @return 所有标签
      */
     @Transactional(rollbackFor = Exception.class)
-    @Cacheable(value = "labels", key = "'all'")
     @Override
     public List<Label> labelSelectByAll() {
         List<Label> labels = labelMapper.selectAll();

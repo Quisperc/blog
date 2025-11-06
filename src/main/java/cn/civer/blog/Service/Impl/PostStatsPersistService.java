@@ -13,7 +13,6 @@ import java.util.Set;
 
 /**
  * 将 Redis 中累积的浏览/点赞增量异步落盘到数据库。
- *
  * 设计要点：
  * - 前端的增量先写入 Redis 有序集合（member 为 postId，score 为增量累积），不会立即写库。
  * - 定时任务读取每个 member 的 score（增量），写库后从 zset 中减去已落盘的值（使用负增量），

@@ -4,6 +4,8 @@ import cn.civer.blog.Mapper.CategoryMapper;
 import cn.civer.blog.Mapper.LabelMapper;
 import cn.civer.blog.Mapper.PostCategoryMapper;
 import cn.civer.blog.Mapper.PostLabelMapper;
+import cn.civer.blog.Model.DTO.PostCategoryDTO;
+import cn.civer.blog.Model.DTO.PostLabelDTO;
 import cn.civer.blog.Model.Entity.Category;
 import cn.civer.blog.Model.Entity.Label;
 import cn.civer.blog.Model.Entity.MessageConstants;
@@ -71,18 +73,18 @@ public class PostAssembler {
         List<BigInteger> postIds = posts.stream().map(Post::getId).collect(Collectors.toList());
 
         // 批量查询文章->分类/标签映射
-        List<cn.civer.blog.Model.DTO.PostCategoryDTO> postCategoryDTOS = postCategoryMapper.selectByPostIds(postIds);
-        List<cn.civer.blog.Model.DTO.PostLabelDTO> postLabelDTOS = postLabelMapper.selectByPostIds(postIds);
+        List<PostCategoryDTO> postCategoryDTOS = postCategoryMapper.selectByPostIds(postIds);
+        List<PostLabelDTO> postLabelDTOS = postLabelMapper.selectByPostIds(postIds);
 
         // 构建 postId -> categoryId list 映射
         Map<BigInteger, List<BigInteger>> postToCategoryIds = new HashMap<>();
-        for (cn.civer.blog.Model.DTO.PostCategoryDTO dto : postCategoryDTOS) {
+        for (PostCategoryDTO dto : postCategoryDTOS) {
             postToCategoryIds.computeIfAbsent(dto.getPostId(), k -> new ArrayList<>()).add(dto.getCategoryId());
         }
 
         // 构建 postId -> labelId list 映射
         Map<BigInteger, List<BigInteger>> postToLabelIds = new HashMap<>();
-        for (cn.civer.blog.Model.DTO.PostLabelDTO dto : postLabelDTOS) {
+        for (PostLabelDTO dto : postLabelDTOS) {
             postToLabelIds.computeIfAbsent(dto.getPostId(), k -> new ArrayList<>()).add(dto.getLabelId());
         }
 
