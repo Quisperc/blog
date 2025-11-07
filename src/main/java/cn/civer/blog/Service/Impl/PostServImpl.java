@@ -9,6 +9,10 @@ import cn.civer.blog.Service.LabelServ;
 import cn.civer.blog.Service.PostServ;
 import cn.civer.blog.Utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.core.Authentication;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -64,6 +68,8 @@ public class PostServImpl implements PostServ {
      * @param postDTO 文章DTO
      * @return 插入结果
      */
+    @CacheEvict(value = {"postList"}, allEntries = true)
+//    @CacheEvict(value = {"post", "postList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postAdd(PostDTO postDTO) {
@@ -113,6 +119,10 @@ public class PostServImpl implements PostServ {
      * @param postDTO 文章DTO
      * @return 修改结果
      */
+    @Caching(evict = {
+        @CacheEvict(value = "post", key = "'id:' + #postId"),
+        // @CacheEvict(value = "postList", allEntries = true)
+    })
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postUpdate(BigInteger postId, PostDTO postDTO) {
@@ -170,6 +180,10 @@ public class PostServImpl implements PostServ {
      * @param postId 文章Id
      * @return 删除结果
      */
+    @Caching(evict = {
+        @CacheEvict(value = "post", key = "'id:' + #postId"),
+        @CacheEvict(value = "postList", allEntries = true)
+    })
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postDeleteById(BigInteger postId) {
@@ -186,16 +200,18 @@ public class PostServImpl implements PostServ {
 
     /**
      * 根据分类删除文章
-     *
      * @param categoryId 分类
      * @return 删除结果
      */
+    @CacheEvict(value = {"post", "postList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postDeleteByCategory(BigInteger categoryId) {
         // 1. 查询包含该分类Id的文章
-        List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
+//        List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
 
+        // 代理查询
+        List<BigInteger> postIds = postServProxy.postIdsByCategory(categoryId);
         BigInteger operatorId = getCurrentUserId();
         // 使用批量删除以减少数据库往返
         deletePostsBatch(postIds, operatorId);
@@ -209,6 +225,7 @@ public class PostServImpl implements PostServ {
      * @param userId 用户Id
      * @return 删除结果
      */
+    @CacheEvict(value = {"post", "postList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     public Boolean postDeleteByUserId(BigInteger userId) {
         List<Post> posts = postMapper.selectByAuthorId(userId);
@@ -222,12 +239,14 @@ public class PostServImpl implements PostServ {
         return Boolean.TRUE;
     }
 
+    @CacheEvict(value = {"post", "postList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postDeleteByLabel(BigInteger labelId) {
         // 1. 查询包含该分类Id的文章
-        List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);
-
+//        List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);
+        // 代理查询
+        List<BigInteger> postIds = postServProxy.postIdsByLabel(labelId);
         BigInteger operatorId = getCurrentUserId();
         deletePostsBatch(postIds, operatorId);
 
@@ -287,9 +306,9 @@ public class PostServImpl implements PostServ {
 
     /**
      * 查询所有文章
-     *
      * @return 文章列表
      */
+    @Cacheable(value = "postList", key = "'all'", unless = "#result == null or #result.isEmpty()")
     @Override
     public List<Post> postSelectAll() {
         List<Post> posts = postMapper.selectAll();
@@ -320,10 +339,10 @@ public class PostServImpl implements PostServ {
 
     /**
      * 根据id查找文章
-     *
      * @param postId 文章id
      * @return 查找结果
      */
+    @Cacheable(value = "post", key = "'id:' + #postId", unless = "#result == null")
     @Override
     public Post postSelectById(BigInteger postId) {
         // 设置文章其他信息
@@ -335,31 +354,52 @@ public class PostServImpl implements PostServ {
         return post;
     }
 
+    /* ************************* 优化点：按分类/标签查询改为缓存文章ID列表 *************************
+     * 说明：将分类/标签/标题到文章ID的映射缓存（轻量），并复用按ID缓存（postsById）来加载每篇文章，
+     * 避免把同一篇文章对象在多个集合缓存中重复存储，降低缓存失效的范围及存储成本。
+     */
+
+    /**
+     * 根据标题查询文章ID（缓存轻量的ID列表）
+     * @param title 文章标题
+     * @return 文章ID列表
+     */
+    @Cacheable(value = "postList", key = "'title:' + #title", unless = "#result == null or #result.isEmpty()")
+    public List<BigInteger> postIdsByTitle(String title) {
+        return postMapper.selectByTitle(title);
+    }
     /**
      * 根据标题查找文章
-     *
      * @param title 文章名
      * @return 查找结果
      */
     @Override
     public List<Post> postSelectByTitle(String title) {
-        List<Post> posts = postMapper.selectByTitle(title);
-        postAssembler.enrichPosts(posts);
-        log.info(MessageConstants.POST_SELECT_SUCCESS + ": 文章名: {}", title);
+//        List<BigInteger> posts = postMapper.selectByTitle(title);
+//        List<Post> posts = postMapper.selectByIds(posts);
+//        postAssembler.enrichPosts(posts);
+//        log.info(MessageConstants.POST_SELECT_SUCCESS + ": 文章名: {}", title);
+
+        // 通过代理调用带缓存的方法以保证缓存生效
+        List<BigInteger> postIds = postServProxy.postIdsByTitle(title);
+        log.info(MessageConstants.POST_SELECT_SUCCESS + ": 文章ID: {}", postIds);
+        List<Post> posts = new ArrayList<>();
+        for (BigInteger postId : postIds) {
+            Post post = postServProxy.postSelectById(postId); // 利用 postsById 缓存（通过代理触发）
+            if (post != null) {
+                posts.add(post);
+                log.info(MessageConstants.POST_SELECT_SUCCESS + ": 文章ID: {}", postId);
+            }
+        }
+
         return posts;
     }
-
-    /* ************************* 优化点：按分类/标签查询改为缓存文章ID列表 *************************
-     * 说明：将分类/标签到文章ID的映射缓存（轻量），并复用按ID缓存（postsById）来加载每篇文章，
-     * 避免把同一篇文章对象在多个集合缓存中重复存储，降低缓存失效的范围及存储成本。
-     */
-
     /**
      * 根据分类查询文章ID（缓存轻量的ID列表）
-     *
      * @param categoryId 分类Id
      * @return 文章ID列表
      */
+    @Cacheable(value = "postList", key = "'category:' + #categoryId", unless = "#result == null or #result.isEmpty()")
     public List<BigInteger> postIdsByCategory(BigInteger categoryId) {
         return postCategoryMapper.selectByCategoryId(categoryId);
     }
@@ -392,6 +432,7 @@ public class PostServImpl implements PostServ {
      * @param labelId 标签
      * @return 文章ID列表
      */
+    @Cacheable(value = "postList", key = "'label:' + #labelId", unless = "#result == null or #result.isEmpty()")
     public List<BigInteger> postIdsByLabel(BigInteger labelId) {
         return postLabelMapper.selectBylabelId(labelId);
     }

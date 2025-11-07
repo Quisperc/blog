@@ -40,7 +40,7 @@ public class CategoryServImpl implements CategoryServ {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Category findOrCreate(String title, BigInteger authorId) {
-        
+
         // 查询分类是否存在
         Category category = categoryMapper.selectByTitle(title);
         if (category != null) return category;

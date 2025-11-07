@@ -29,4 +29,5 @@ public interface PostServ {
     // 轻量缓存：按分类/标签返回文章 ID 列表，供复用 postsById 缓存加载
     List<BigInteger> postIdsByCategory(BigInteger categoryId);
     List<BigInteger> postIdsByLabel(BigInteger labelId);
+    List<BigInteger> postIdsByTitle(String title);
 }
