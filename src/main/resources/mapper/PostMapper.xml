@@ -35,6 +35,12 @@
                 update_time=NOW()
         WHERE id=#{id}
     </update>
+    <delete id="deleteByIds">
+        DELETE FROM t_post WHERE id IN
+         <foreach item="item" index="index" collection="ids" open="(" separator="," close=")">
+             #{item}
+         </foreach>
+    </delete>
 
     <select id="selectByCategory" resultType="cn.civer.blog.Model.Entity.Post">
         select *

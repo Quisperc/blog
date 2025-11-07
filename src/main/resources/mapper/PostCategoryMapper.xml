@@ -15,6 +15,13 @@
         )
     </insert>
 
+    <delete id="deleteByPostIds">
+        DELETE FROM t_post_category WHERE post_id IN
+         <foreach item="item" index="index" collection="postIds" open="(" separator="," close=")">
+             #{item}
+         </foreach>
+    </delete>
+
     <select id="selectByPostIds" parameterType="list" resultType="cn.civer.blog.Model.DTO.PostCategoryDTO">
         SELECT id as id, post_id as postId, category_id as categoryId, create_time as createTime, update_time as updateTime
         FROM t_post_category

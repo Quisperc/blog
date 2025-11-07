@@ -197,9 +197,8 @@ public class PostServImpl implements PostServ {
         List<BigInteger> postIds = postCategoryMapper.selectByCategoryId(categoryId);
 
         BigInteger operatorId = getCurrentUserId();
-        for (BigInteger postId : postIds) {
-            deletePostAndMappings(postId, operatorId, postMapper.selectById(postId));
-        }
+        // 使用批量删除以减少数据库往返
+        deletePostsBatch(postIds, operatorId);
 
         return Boolean.TRUE;
     }
@@ -213,10 +212,12 @@ public class PostServImpl implements PostServ {
     @Transactional(rollbackFor = Exception.class)
     public Boolean postDeleteByUserId(BigInteger userId) {
         List<Post> posts = postMapper.selectByAuthorId(userId);
+        if (posts == null || posts.isEmpty()) return Boolean.TRUE;
+        List<BigInteger> postIds = new ArrayList<>();
+        for (Post p : posts) postIds.add(p.getId());
+
         BigInteger operatorId = getCurrentUserId();
-        for (Post post : posts) {
-            deletePostAndMappings(post.getId(), operatorId, post);
-        }
+        deletePostsBatch(postIds, operatorId);
 
         return Boolean.TRUE;
     }
@@ -228,13 +229,33 @@ public class PostServImpl implements PostServ {
         List<BigInteger> postIds = postLabelMapper.selectBylabelId(labelId);
 
         BigInteger operatorId = getCurrentUserId();
-        for (BigInteger postId : postIds) {
-            deletePostAndMappings(postId, operatorId, postMapper.selectById(postId));
-        }
+        deletePostsBatch(postIds, operatorId);
 
         return Boolean.TRUE;
     }
 
+    /**
+     * 批量删除文章（先删除映射，再批量删除文章）
+     * @param postIds 文章ID集合
+     * @param operatorId 操作者ID（用于日志）
+     */
+
+    private void deletePostsBatch(List<BigInteger> postIds, BigInteger operatorId) {
+        if (postIds == null || postIds.isEmpty()) {
+            log.debug("没有需要删除的文章");
+            return;
+        }
+
+        // 先删除映射表中的关系（批量）
+            postLabelMapper.deleteByPostIds(postIds);
+            log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS + ": posts {}", postIds);
+            postCategoryMapper.deleteByPostIds(postIds);
+            log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS + ": posts {}", postIds);
+
+        // 批量删除主表文章
+        int deleted = postMapper.deleteByIds(postIds);
+        log.info(MessageConstants.POST_DELETE_SUCCESS + ": 删除文章数量({}) (操作者:{})", deleted, operatorId);
+    }
     /**
      * 公共删除逻辑：删除文章并清理关联映射、记录日志
      *

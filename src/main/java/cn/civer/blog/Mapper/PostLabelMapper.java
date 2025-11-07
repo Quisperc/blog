@@ -82,4 +82,12 @@ public interface PostLabelMapper {
     int update(BigInteger id, BigInteger labelId);
 
     void insertIfNotExist(@Param("postId") BigInteger postId,@Param("labelId") BigInteger labelId);
+
+    /**
+     * 根据文章ID批量删除记录
+     * @param postIds 文章ID集合
+     * @return 修改行数
+     */
+
+    int deleteByPostIds(@Param("postIds") List<BigInteger> postIds);
 }

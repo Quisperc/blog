@@ -104,6 +104,12 @@ public interface PostMapper {
      */
     @Delete("delete from t_post where id = #{id}")
     int deleteById(BigInteger id);
+    /**
+     * 批量删除文章
+     * @param ids 文章ID集合
+     * @return 删除行数
+     */
+    int deleteByIds(@Param("ids") List<BigInteger> ids);
 
     /**
      * 批量按 delta 增加 views（用于异步从 Redis 刷盘）
