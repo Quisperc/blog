@@ -7,6 +7,8 @@ import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Service.LabelServ;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,6 +39,7 @@ public class LabelServImpl implements LabelServ {
      * @param authorId 作者Id
      * @return 标签
      */
+    @CacheEvict(value = {"labelList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Label findOrCreate(String title, BigInteger authorId) {
@@ -59,6 +62,7 @@ public class LabelServImpl implements LabelServ {
      * @param title 标签标题
      * @return 插入成功结果
      */
+    @CacheEvict(value = {"labelList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean labelInsert(String title) {
@@ -86,6 +90,7 @@ public class LabelServImpl implements LabelServ {
      * @param labelId 标签Id
      * @return 删除结果
      */
+    @CacheEvict(value = {"labelList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean labelDelete(BigInteger labelId) {
@@ -109,6 +114,7 @@ public class LabelServImpl implements LabelServ {
      * @param status  标签状态
      * @return 更新结果
      */
+    @CacheEvict(value = {"labelList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean labelUpdate(BigInteger labelId, String title, Integer status) {
@@ -136,6 +142,7 @@ public class LabelServImpl implements LabelServ {
      * @param labelId 标签Id
      * @return 查询结果Label
      */
+    @Cacheable(value = "labelList", key = "'id:' + #labelId", unless = "#result == null")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Label labelSelectById(BigInteger labelId) {
@@ -150,6 +157,7 @@ public class LabelServImpl implements LabelServ {
      * @param title 标签名
      * @return 标签
      */
+    @Cacheable(value = "labelList", key = "'title:' + #title", unless = "#result == null")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Label labelSelectByTitle(String title) {
@@ -163,6 +171,7 @@ public class LabelServImpl implements LabelServ {
      *
      * @return 所有标签
      */
+    @Cacheable(value = "labelList", key = "'all'", unless = "#result == null or #result.isEmpty()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<Label> labelSelectByAll() {

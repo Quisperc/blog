@@ -27,8 +27,8 @@ public interface PostMapper {
      * @param title 文章名
      * @return 文章集合
      */
-    @Select("select * from t_post where title like CONCAT('%', #{title}, '%')")
-    List<Post> selectByTitle(String title);
+    @Select("select id from t_post where title like CONCAT('%', #{title}, '%')")
+    List<BigInteger> selectByTitle(String title);
 
     /**
      * 根据作者Id查询文章

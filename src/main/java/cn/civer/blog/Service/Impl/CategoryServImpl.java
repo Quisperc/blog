@@ -7,6 +7,8 @@ import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Service.CategoryServ;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -37,10 +39,11 @@ public class CategoryServImpl implements CategoryServ {
      * @param authorId 作者Id
      * @return 分类
      */
+    @CacheEvict(value = {"categoryList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Category findOrCreate(String title, BigInteger authorId) {
-        
+
         // 查询分类是否存在
         Category category = categoryMapper.selectByTitle(title);
         if (category != null) return category;
@@ -59,6 +62,7 @@ public class CategoryServImpl implements CategoryServ {
      * @param title 分类标题
      * @return 插入成功结果
      */
+    @CacheEvict(value = {"categoryList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean categoryInsert(String title) {
@@ -85,6 +89,7 @@ public class CategoryServImpl implements CategoryServ {
      * @param categoryId 分类Id
      * @return 删除结果
      */
+    @CacheEvict(value = {"categoryList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean categoryDelete(BigInteger categoryId) {
@@ -105,6 +110,7 @@ public class CategoryServImpl implements CategoryServ {
      * @param status  分类状态
      * @return 更新结果
      */
+    @CacheEvict(value = {"categoryList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean categoryUpdate(BigInteger categoryId, String title, Integer status) {
@@ -130,6 +136,7 @@ public class CategoryServImpl implements CategoryServ {
      * @param categoryId 分类Id
      * @return 查询结果Category
      */
+    @Cacheable(value = "categoryList", key = "'id:' + #categoryId", unless = "#result == null")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Category categorySelectById(BigInteger categoryId) {
@@ -140,10 +147,10 @@ public class CategoryServImpl implements CategoryServ {
 
     /**
      * 根据分类名查询分类
-     *
      * @param title 分类名
      * @return 分类
      */
+    @Cacheable(value = "categoryList", key = "'title:' + #title", unless = "#result == null")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Category categorySelectByTitle(String title) {
@@ -154,9 +161,9 @@ public class CategoryServImpl implements CategoryServ {
 
     /**
      * 查询所有分类
-     *
      * @return 所有分类
      */
+    @Cacheable(value = "categoryList", key = "'all'", unless = "#result == null or #result.isEmpty()")
     @Transactional(rollbackFor = Exception.class)
     @Override
     public List<Category> categorySelectByAll() {
