@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.math.BigInteger;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @Slf4j
 @Service
@@ -83,12 +84,26 @@ public class FileServImpl implements FileServ {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean deleteFile(String objectKey) {
-        // 数据库中不存在则直接返回
-        if(myFileMapper.selectByObjectKey(objectKey) == null){
+        // 获取文件记录
+        MyFile fileRecord = myFileMapper.selectByObjectKey(objectKey);
+        if(fileRecord == null){
             throw new BizException("数据库："+MessageConstants.FILE_NOT_EXIST);
-        }else if (!obsUtils.doesFileExist(objectKey)) {
+        }
+        
+        // 检查权限：只有文件所有者或管理员可以删除
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        BigInteger currentUserId = new BigInteger(authentication.getName());
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_manager"));
+        
+        if (!fileRecord.getAuthorId().equals(currentUserId) && !isAdmin) {
+            throw new BizException("无权限删除此文件");
+        }
+        
+        if (!obsUtils.doesFileExist(objectKey)) {
             throw new BizException("OBS桶："+MessageConstants.FILE_NOT_EXIST);
         }
+        
         myFileMapper.delete(objectKey);
         return obsUtils.deleteFile(objectKey);
     }
@@ -116,7 +131,14 @@ public class FileServImpl implements FileServ {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public ResponseEntity<StreamingResponseBody> downloadFile(String objectKey) {
-        // 先判断文件是否存在
+        // 获取文件记录
+        MyFile fileRecord = myFileMapper.selectByObjectKey(objectKey);
+        if(fileRecord == null){
+            throw new BizException(MessageConstants.FILE_NOT_EXIST);
+        }
+        
+        // 所有用户都可以下载文件，无需权限检查
+        
         if (!obsUtils.doesFileExist(objectKey)) {
             throw new BizException(MessageConstants.FILE_NOT_EXIST);
         }
@@ -147,13 +169,39 @@ public class FileServImpl implements FileServ {
 
     @Override
     public String downloadFileUrl(String objectKey) {
-        // 先判断文件是否存在
-        if(myFileMapper.selectByObjectKey(objectKey) == null){
-            throw new BizException(MessageConstants.FILE_NOT_EXIST);
-        }else if (!obsUtils.doesFileExist(objectKey)) {
+        // 获取文件记录
+        MyFile fileRecord = myFileMapper.selectByObjectKey(objectKey);
+        if(fileRecord == null){
             throw new BizException(MessageConstants.FILE_NOT_EXIST);
         }
+        
+        // 所有用户都可以获取文件下载链接，无需权限检查
+        
+        if (!obsUtils.doesFileExist(objectKey)) {
+            throw new BizException(MessageConstants.FILE_NOT_EXIST);
+        }
+        
         String result = obsUtils.generateFileUrl(objectKey);
         return result;
+    }
+    
+    /**
+     * 获取数据库中的所有文件记录
+     * @return 文件记录列表
+     */
+    @Override
+    public List<MyFile> getAllFileRecords() {
+        return myFileMapper.select();
+    }
+    
+    /**
+     * 获取当前用户的文件记录
+     * @return 文件记录列表
+     */
+    @Override
+    public List<MyFile> getCurrentUserFileRecords() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        BigInteger currentUserId = new BigInteger(authentication.getName());
+        return myFileMapper.selectByAuthorId(currentUserId);
     }
 }

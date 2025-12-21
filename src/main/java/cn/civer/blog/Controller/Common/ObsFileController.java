@@ -81,4 +81,25 @@ public class ObsFileController {
         ObjectListing result = fileServ.listFile();
         return Result.success(result);
     }
+    
+    /**
+     * 获取数据库中的所有文件记录
+     * @return 文件记录列表
+     */
+    @Operation(summary = "获取数据库中的所有文件记录")
+    @GetMapping(value = "all")
+    public Result selectAll(){
+        return Result.success(fileServ.getAllFileRecords());
+    }
+    
+    /**
+     * 获取当前用户的文件记录
+     * @return 文件记录列表
+     */
+    @PreAuthorize("hasRole('poster')")
+    @Operation(summary = "获取当前用户的文件记录")
+    @GetMapping(value = "my")
+    public Result selectMyFiles(){
+        return Result.success(fileServ.getCurrentUserFileRecords());
+    }
 }
