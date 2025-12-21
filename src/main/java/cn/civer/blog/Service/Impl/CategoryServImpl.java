@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -31,6 +32,19 @@ public class CategoryServImpl implements CategoryServ {
     private BigInteger getCurrentUserId() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return new BigInteger(authentication.getName());
+    }
+    
+    /**
+     * 检查当前用户是否是管理员
+     * @return 是否是管理员
+     */
+    private boolean isAdminUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_manager"));
     }
 
     /**
@@ -93,8 +107,13 @@ public class CategoryServImpl implements CategoryServ {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean categoryDelete(BigInteger categoryId) {
-        if (categoryMapper.selectById(categoryId) == null) {
+        Category category = categoryMapper.selectById(categoryId);
+        if (category == null) {
             throw new BizException(MessageConstants.CATEGORY_NOT_EXIST+ ": " + categoryId);
+        }
+        // 非所有者不可删除
+        if (!category.getAuthorId().equals(getCurrentUserId())) {
+            throw new BizException(MessageConstants.CATEGORY_DELETE_FAILED + ": " + categoryId);
         }
         // 删除分类
         categoryMapper.deleteById(categoryId);
@@ -119,12 +138,23 @@ public class CategoryServImpl implements CategoryServ {
         if (category == null) {
             throw new BizException(MessageConstants.CATEGORY_NOT_EXIST + ": " + title);
         }
+        
+        // 检查用户权限
+        BigInteger currentUserId = getCurrentUserId();
+        boolean isAdmin = isAdminUser();
+        
+        // 非所有者且非管理员不可修改
+        if (!category.getAuthorId().equals(currentUserId) && !isAdmin) {
+            throw new BizException(MessageConstants.CATEGORY_UPDATE_FAILED + ": " + title);
+        }
         if (StringUtils.hasText(title)) {
             category.setTitle(title);
         }
+
         if (status != null) {
             category.setStatus(status);
         }
+
         categoryMapper.update(category);
         log.info(MessageConstants.CATEGORY_UPDATE_SUCCESS + ": {}", title);
         return Boolean.TRUE;

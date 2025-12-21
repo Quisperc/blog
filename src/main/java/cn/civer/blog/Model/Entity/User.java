@@ -21,6 +21,4 @@ public class User implements Serializable {
     private LocalDateTime createdAt;
     // 登录时间
     private LocalDateTime updatedAt;
-
-
 }

@@ -10,7 +10,6 @@ import cn.civer.blog.Service.PostServ;
 import cn.civer.blog.Utils.RedisUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.security.core.Authentication;
@@ -25,6 +24,7 @@ import cn.civer.blog.Exception.BizException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Slf4j
 @Service
@@ -61,6 +61,19 @@ public class PostServImpl implements PostServ {
         }
         return new BigInteger(authentication.getName());
     }
+    
+    /**
+     * 检查当前用户是否是管理员
+     * @return 是否是管理员
+     */
+    private boolean isAdminUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_manager"));
+    }
 
     /**
      * 新增文章
@@ -68,8 +81,8 @@ public class PostServImpl implements PostServ {
      * @param postDTO 文章DTO
      * @return 插入结果
      */
-    @CacheEvict(value = {"postList"}, allEntries = true)
-//    @CacheEvict(value = {"post", "postList"}, allEntries = true)
+//    @CacheEvict(value = {"postList"}, allEntries = true)
+    @CacheEvict(value = {"post", "postList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postAdd(PostDTO postDTO) {
@@ -93,6 +106,10 @@ public class PostServImpl implements PostServ {
         if (postDTO.getCategories() != null) {
             for (CategoryDTO c : postDTO.getCategories()) {
                 Category category = categoryServ.findOrCreate(c.getTitle(), authorId);
+                // 检查分类是否已禁用
+                if (category.getStatus() == null || category.getStatus() != 1) {
+                    throw new BizException("分类 [" + category.getTitle() + "] 已被禁用，无法使用");
+                }
                 log.info("准备插入文章分类映射：postId={}, categoryId={}", postId, category.getId());
                 postCategoryMapper.insertIfNotExist(postId, category.getId());
                 log.info(MessageConstants.POST_CATEGORY_INSERT_SUCCESS + ": 绑定分类 [{}] -> 文章 [{}]", category.getTitle(), post.getTitle());
@@ -103,6 +120,10 @@ public class PostServImpl implements PostServ {
         if (postDTO.getLabels() != null) {
             for (LabelDTO l : postDTO.getLabels()) {
                 Label label = labelServ.findOrCreate(l.getTitle(), authorId);
+                // 检查标签是否已禁用
+                if (label.getStatus() == null || label.getStatus() != 1) {
+                    throw new BizException("标签 [" + label.getTitle() + "] 已被禁用，无法使用");
+                }
                 log.info("准备插入文章标签映射：postId={}, labelId={}", postId, label.getId());
                 postLabelMapper.insertIfNotExist(postId, label.getId());
                 log.info(MessageConstants.POST_LABEL_INSERT_SUCCESS + ": 绑定标签 [{}] -> 文章 [{}]", label.getTitle(), post.getTitle());
@@ -121,15 +142,25 @@ public class PostServImpl implements PostServ {
      */
     @Caching(evict = {
         @CacheEvict(value = "post", key = "'id:' + #postId"),
-        // @CacheEvict(value = "postList", allEntries = true)
+        @CacheEvict(value = "postList", allEntries = true)
     })
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean postUpdate(BigInteger postId, PostDTO postDTO) {
         // 获取用户Id
         BigInteger authorId = getCurrentUserId();
+
         // 1️⃣ 更新主表
-        Post post = new Post();
+//        Post post = new Post();
+        Post post = postMapper.selectById(postId);
+        
+        // 检查用户权限
+        boolean isAdmin = isAdminUser();
+        
+        // 非所有者且非管理员不可修改
+        if (!Objects.equals(post.getAuthorId(), authorId) && !isAdmin) {
+            throw new BizException(MessageConstants.POST_UPDATE_FAILED + ": " + post.getTitle());
+        }
         post.setId(postId);
 
         if (StringUtils.hasText(postDTO.getTitle()))
@@ -155,6 +186,10 @@ public class PostServImpl implements PostServ {
             log.info(MessageConstants.POST_CATEGORY_DELETE_SUCCESS);
             for (CategoryDTO c : postDTO.getCategories()) {
                 Category category = categoryServ.findOrCreate(c.getTitle(), authorId);
+                // 检查分类是否已禁用
+                if (category.getStatus() == null || category.getStatus() != 1) {
+                    throw new BizException("分类 [" + category.getTitle() + "] 已被禁用，无法使用");
+                }
                 postCategoryMapper.insertIfNotExist(postId, category.getId());
                 log.info(MessageConstants.POST_CATEGORY_INSERT_SUCCESS + ": 绑定分类 [{}] -> 文章 [{}]", category.getTitle(), post.getTitle());
             }
@@ -166,6 +201,10 @@ public class PostServImpl implements PostServ {
             log.info(MessageConstants.POST_LABEL_DELETE_SUCCESS);
             for (LabelDTO l : postDTO.getLabels()) {
                 Label label = labelServ.findOrCreate(l.getTitle(), authorId);
+                // 检查标签是否已禁用
+                if (label.getStatus() == null || label.getStatus() != 1) {
+                    throw new BizException("标签 [" + label.getTitle() + "] 已被禁用，无法使用");
+                }
                 postLabelMapper.insertIfNotExist(postId, label.getId());
                 log.info(MessageConstants.POST_LABEL_INSERT_SUCCESS + ": 绑定标签 [{}] -> 文章 [{}]", label.getTitle(), post.getTitle());
             }
@@ -191,6 +230,10 @@ public class PostServImpl implements PostServ {
         BigInteger authorId = getCurrentUserId();
         // 读取文章标题以便针对性驱逐 postsByTitle
         Post toDeletePost = postMapper.selectById(postId);
+        // 非所有者不可删除
+        if (!Objects.equals(toDeletePost.getAuthorId(), authorId)) {
+            throw new BizException(MessageConstants.POST_DELETE_FAILED + ": " + toDeletePost.getTitle());
+        }
 
         // Use helper to perform deletion and mapping cleanup
         deletePostAndMappings(postId, authorId, toDeletePost);
@@ -228,10 +271,10 @@ public class PostServImpl implements PostServ {
     @CacheEvict(value = {"post", "postList"}, allEntries = true)
     @Transactional(rollbackFor = Exception.class)
     public Boolean postDeleteByUserId(BigInteger userId) {
-        List<Post> posts = postMapper.selectByAuthorId(userId);
+        List<BigInteger> posts = postMapper.selectByAuthorId(userId);
         if (posts == null || posts.isEmpty()) return Boolean.TRUE;
         List<BigInteger> postIds = new ArrayList<>();
-        for (Post p : posts) postIds.add(p.getId());
+        for (BigInteger p : posts) postIds.add(p);
 
         BigInteger operatorId = getCurrentUserId();
         deletePostsBatch(postIds, operatorId);
@@ -321,6 +364,13 @@ public class PostServImpl implements PostServ {
     public Boolean postIncreLikes(BigInteger postId) {
 //        postMapper.incrementLikes(postId);
 //        redisUtils.increZSetScore(MessageConstants.REDIS_POST_LIKES,postId.toString(),1L);
+        // redis中不存在则从数据库中读取并初始化redis
+        if (!redisUtils.hasKey(MessageConstants.REDIS_POST_LIKES)) {
+            Post post = postMapper.selectById(postId);
+            if (post != null) {
+                redisUtils.increZSetScore(MessageConstants.REDIS_POST_LIKES, postId.toString(), Long.valueOf(post.getLikes()));
+            }
+        }
         // 写入 Redis 中的有序集合以记录增量（不立即写库）
         redisUtils.increZSetScore(MessageConstants.REDIS_POST_LIKES, postId.toString(), 1L);
         log.info(MessageConstants.POST_LIKE_SUCCESS + " (ID:{})", postId);
@@ -331,6 +381,13 @@ public class PostServImpl implements PostServ {
     public Boolean postIncreViews(BigInteger postId) {
 //        postMapper.incrementViews(postId);
 //        redisUtils.increZSetScore(MessageConstants.REDIS_POST_VIEWS,postId.toString(),1L);
+        // redis中不存在则从数据库中读取并初始化redis
+        if (!redisUtils.hasKey(MessageConstants.REDIS_POST_VIEWS)) {
+            Post post = postMapper.selectById(postId);
+            if (post != null) {
+                redisUtils.increZSetScore(MessageConstants.REDIS_POST_VIEWS, postId.toString(), Long.valueOf(post.getViews()));
+            }
+        }
         // 写入 Redis 有序集合记录浏览量增量（不立即写库）
         redisUtils.increZSetScore(MessageConstants.REDIS_POST_VIEWS, postId.toString(), 1L);
         log.info(MessageConstants.POST_VIEW_SUCCESS + " (ID:{})", postId);
@@ -394,6 +451,39 @@ public class PostServImpl implements PostServ {
 
         return posts;
     }
+
+    /**
+     * 根据作者查询文章ID（缓存轻量的ID列表）
+     * @param authorId 作者Id
+     * @return 文章ID列表
+     */
+    @Cacheable(value = "postList", key = "'authorId:' + #authorId", unless = "#result == null or #result.isEmpty()")
+    public List<BigInteger> postIdsByAuthor(BigInteger authorId) {
+        return postMapper.selectByAuthorId(authorId);
+    }
+
+    /**
+     * 根据作者查询文章
+     *
+     * @param authorId 作者Id
+     * @return 查询文章的集合
+     */
+    @Override
+    public List<Post> postSelectByAuthor(BigInteger authorId) {
+        // 通过代理调用带缓存的方法以保证缓存生效
+        List<BigInteger> postIds = postServProxy.postIdsByAuthor(authorId);
+        log.info(MessageConstants.POST_SELECT_SUCCESS + ": 文章ID: {}", postIds);
+        List<Post> posts = new ArrayList<>();
+        for (BigInteger postId : postIds) {
+            Post post = postServProxy.postSelectById(postId); // 利用 postsById 缓存（通过代理触发）
+            if (post != null) {
+                posts.add(post);
+                log.info(MessageConstants.POST_SELECT_SUCCESS + ": 文章ID: {}", postId);
+            }
+        }
+        return posts;
+    }
+
     /**
      * 根据分类查询文章ID（缓存轻量的ID列表）
      * @param categoryId 分类Id

@@ -24,7 +24,7 @@ public class ObsFileController {
      * @param file 设置文件类型为 MediaType.MULTIPART_FORM_DATA_VALUE
      * @return 上传成功后的文件访问url
      */
-    @PreAuthorize("hasRole('subscriber')")
+    @PreAuthorize("hasRole('poster')")
     @Operation(summary = "上传文件")
     @PostMapping(value = "upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public Result upLoad(@RequestParam("file") @RequestPart("file") MultipartFile file){
@@ -60,7 +60,7 @@ public class ObsFileController {
      * @param filePath 文件所在路径
      * @return 删除结果
      */
-    @PreAuthorize("hasRole('subscriber')")
+    @PreAuthorize("hasRole('poster')")
     @Operation(summary = "删除文件")
     @DeleteMapping(value = "delete")
     public Result delete(@RequestParam("filePath") String filePath){

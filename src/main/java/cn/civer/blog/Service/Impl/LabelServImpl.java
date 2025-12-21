@@ -32,6 +32,19 @@ public class LabelServImpl implements LabelServ {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return new BigInteger(authentication.getName());
     }
+    
+    /**
+     * 检查当前用户是否是管理员
+     * @return 是否是管理员
+     */
+    private boolean isAdminUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return false;
+        }
+        return authentication.getAuthorities().stream()
+                .anyMatch(authority -> authority.getAuthority().equals("ROLE_manager"));
+    }
 
     /**
      * 获取标签
@@ -94,12 +107,17 @@ public class LabelServImpl implements LabelServ {
     @Transactional(rollbackFor = Exception.class)
     @Override
     public Boolean labelDelete(BigInteger labelId) {
-        if (labelMapper.selectById(labelId) == null) {
+        // 读取标题以便驱逐
+        Label existing = labelMapper.selectById(labelId);
+        if (existing == null) {
             throw new BizException(MessageConstants.LABEL_NOT_EXIST+ ": " + labelId);
         }
         // 删除标签
-        // 读取标题以便驱逐
-        Label existing = labelMapper.selectById(labelId);
+        // 非所有者不可删除
+        if (!existing.getAuthorId().equals(getCurrentUserId())) {
+            throw new BizException(MessageConstants.LABEL_DELETE_FAILED + ": " + labelId);
+        }
+
         labelMapper.deleteById(labelId);
         log.info(MessageConstants.LABEL_DELETE_SUCCESS + ": {}", labelId);
 
@@ -122,6 +140,15 @@ public class LabelServImpl implements LabelServ {
         Label label = labelMapper.selectById(labelId);
         if (label == null) {
             throw new BizException(MessageConstants.LABEL_NOT_EXIST + ": " + title);
+        }
+        
+        // 检查用户权限
+        BigInteger currentUserId = getCurrentUserId();
+        boolean isAdmin = isAdminUser();
+        
+        // 非所有者且非管理员不可修改
+        if (!label.getAuthorId().equals(currentUserId) && !isAdmin) {
+            throw new BizException(MessageConstants.LABEL_UPDATE_FAILED + ": " + title);
         }
         String oldTitle = label.getTitle();
         if (StringUtils.hasText(title)) {

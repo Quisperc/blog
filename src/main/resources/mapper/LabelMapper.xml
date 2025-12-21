@@ -11,10 +11,10 @@
             <if test="title != null and title != ''">
                 title = #{title},
             </if>
-            <if test="authorId != null and authorId != ''">
+            <if test="authorId != null">
                 author_id = #{authorId},
             </if>
-            <if test="status != null and status != ''">
+            <if test="status != null">
                 status = #{status},
             </if>
             update_time = NOW()

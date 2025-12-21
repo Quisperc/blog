@@ -138,12 +138,12 @@ public class UserServImpl implements UserServ {
             throw new BizException(MessageConstants.USER_NOT_EXIST);
         }
 
-        // 判断用户是否存在
-        User userSelect =  userMapper.selectByUsername(username);
-        if (userSelect != null) {
-            // 存在则无法注册
-            throw new BizException(MessageConstants.USER_EXIST + ": {}" + username);
-        }
+//        // 判断用户是否存在
+//        User userSelect =  userMapper.selectByUsername(username);
+//        if (userSelect != null) {
+//            // 存在则无法注册
+//            throw new BizException(MessageConstants.USER_EXIST + ": {}" + username);
+//        }
 
         // 用户名不为空则表明需要修改用户名
         if (!"".equals(username)) {
@@ -167,14 +167,13 @@ public class UserServImpl implements UserServ {
      * @return Result包jwt
      */
     @Override
-    public String userLogin(String username, String rawPassword) {
+    public Map<String, Object> userLogin(String username, String rawPassword) {
         // 获取User对象
         User user = userMapper.selectByUsername(username);
         // 判断用户是否存在
         if (user == null) {
             throw new BizException(MessageConstants.USER_NOT_EXIST);
         }
-
         // 备用
         Map<String, Object> mp = new HashMap<>();
 
@@ -189,7 +188,20 @@ public class UserServImpl implements UserServ {
             redisUtils.set(MessageConstants.JWT_USER_PRIVILEGE + user.getId(), JSON.toJSONString(priList), Duration.ofMinutes(24 * 60));
 
             log.info(MessageConstants.USER_LOGIN_SUCCESS+"({})！权限为" + priList, user.getUsername());
-            return jwt;
+
+            UserDTO userDTO = new UserDTO();
+            userDTO.setId(user.getId());
+            userDTO.setUsername(user.getUsername());
+            userDTO.setRole(user.getRole());
+            userDTO.setUpdatedAt(user.getUpdatedAt());
+            userDTO.setCreatedAt(user.getCreatedAt());
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("data", userDTO);
+            result.put("token", jwt);
+            log.info("JWT result: {}", result);
+            return result;
+
         } else {
             throw new BizException(MessageConstants.USER_LOGIN_FAILED);
         }
@@ -211,10 +223,12 @@ public class UserServImpl implements UserServ {
         // Long leastExpirationLong = expiration.getTime() - System.currentTimeMillis();
         Long ExpirationLong = expiration.getTime();
 
-        // 加入黑名单，24*60保证jwt完全失效
+        // 1️⃣ 加入黑名单，24*60保证jwt完全失效
         redisUtils.zSet(MessageConstants.JWT_BLACKLISTS,token,ExpirationLong);
         // TODO 旧版本，可以删
         // redisUtils.set(MessageConstants.JWT_BLACKLIST + token, "true", leastExpirationDuration);
+        // 2️⃣ 清除当前 Security 认证信息
+        SecurityContextHolder.clearContext();
         log.info("用户ID：{}（{}）退出成功！token：{} 已失效！",claims.getSubject(),claims.get("username", String.class), token);
         return Boolean.TRUE;
     }

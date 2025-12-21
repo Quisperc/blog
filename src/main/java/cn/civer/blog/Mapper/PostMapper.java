@@ -36,7 +36,7 @@ public interface PostMapper {
      * @return 文章结果
      */
     @Select("select * from t_post where author_id = #{authorId}")
-    List<Post> selectByAuthorId(BigInteger authorId);
+    List<BigInteger> selectByAuthorId(BigInteger authorId);
 
     /**
      * 根据作者名查询文章

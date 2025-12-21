@@ -6,20 +6,20 @@
         VALUES (#{title},#{authorId},#{status},now(),now())
     </insert>
     <update id="update">
-        UPDATE t_category
-        SET
-            <if test="title != null and title != ''">
-                title = #{title},
-            </if>
-            <if test="authorId != null and authorId != ''">
-                author_id = #{authorId},
-            </if>
-            <if test="status != null and status != ''">
-                status = #{status},
-            </if>
-            update_time = NOW()
-        where id = #{id}
-    </update>
+    UPDATE t_category
+    SET
+        <if test="title != null and title != ''">
+            title = #{title},
+        </if>
+        <if test="authorId != null">
+            author_id = #{authorId},
+        </if>
+        <if test="status != null">
+            status = #{status},
+        </if>
+        update_time = NOW()
+    WHERE id = #{id}
+</update>
 
     <select id="selectByIds" parameterType="list" resultType="cn.civer.blog.Model.Entity.Category">
         SELECT * FROM t_category

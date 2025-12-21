@@ -31,7 +31,7 @@ public class PostStatsPersistService {
     /**
      * 每分钟执行一次（可通过 spring 配置覆盖）
      */
-    @Scheduled(fixedDelayString = "${blog.stats.flush-ms:60000}")
+    @Scheduled(fixedDelayString = "${blog.stats.flush-ms:1000}")
     public void flushStatsToDb() {
         try {
             flushKey(MessageConstants.REDIS_POST_VIEWS, true);
@@ -62,9 +62,9 @@ public class PostStatsPersistService {
                 if (updated > 0) {
                     // 从 zset 中减去已落盘的增量，保留并发期间新增的值
 //                    redisUtils.increZSetScore(key, member, -delta);
-                    log.info("已落盘 {}: postId={}, delta={}, rows={}", key, member, delta, updated);
+                    // log.info("已落盘 {}: postId={}, delta={}, rows={}", key, member, delta, updated);
                 } else {
-                    log.warn("数据库未更新 {}: postId={}, delta={}", key, member, delta);
+                    // log.warn("数据库未更新 {}: postId={}, delta={}", key, member, delta);
                 }
             } catch (Exception e) {
                 log.error("处理 member={} on key={} 时发生错误", new Object[]{member, key, e});

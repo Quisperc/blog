@@ -14,10 +14,10 @@ public class PrivilegeUtils {
         if(user.getRole() == Role.manager){
             // 添加权限集合
             arrayList.add("ROLE_"+ Role.manager);
-            arrayList.add("ROLE_"+ Role.subscriber);
+            arrayList.add("ROLE_"+ Role.poster);
             arrayList.add("ROLE_"+ Role.viewer);
-        } else if (user.getRole() == Role.subscriber) {
-            arrayList.add("ROLE_"+ Role.subscriber);
+        } else if (user.getRole() == Role.poster) {
+            arrayList.add("ROLE_"+ Role.poster);
             arrayList.add("ROLE_"+ Role.viewer);
         }else {
             arrayList.add("ROLE_"+ Role.viewer);

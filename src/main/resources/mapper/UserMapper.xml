@@ -8,19 +8,19 @@
         <result property="password" column="password"/>
         <result property="role" column="role"
                 javaType="cn.civer.blog.Model.Enum.Role"/>
-        <result property="registerTime" column="created_at"/>
-        <result property="loginTime" column="login_time"/>
+        <result property="createdAt" column="created_at"/>
+        <result property="updatedAt" column="updated_at"/>
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
-        insert into t_user(id, username, password, role, login_time, register_time)
+        insert into t_user(id, username, password, role, updated_at, created_at)
         values (
                 #{id},
                 #{username},
                 #{password},
                 #{role},
-                #{loginTime},
-                #{registerTime}
+                #{updatedAt},
+                #{createdAt}
                )
     </insert>
     <update id="update">
@@ -32,8 +32,8 @@
             <if test="password != null and password != ''">
                 password = #{password},
             </if>
-            <if test="loginTime != null">
-                login_time = #{loginTime},
+            <if test="updatedAt != null">
+                updated_at = #{updatedAt},
             </if>
             <if test="role != null">
                 role = #{role},

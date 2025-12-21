@@ -3,12 +3,14 @@ package cn.civer.blog.Controller.Common;
 import cn.civer.blog.Model.Entity.MessageConstants;
 import cn.civer.blog.Model.Entity.Result;
 import cn.civer.blog.Service.CategoryServ;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigInteger;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/admin/category")
 public class CategoryController {
@@ -31,6 +33,7 @@ public class CategoryController {
     public Result categoryUpdate(@RequestParam("categoryId") BigInteger categoryId,
                                  @RequestParam("title")String title,
                                  @RequestParam("status")Integer status){
+        log.info("categoryId:{},title:{},status:{}",categoryId,title,status);
         categoryServ.categoryUpdate(categoryId,title,status);
         return Result.success(MessageConstants.CATEGORY_UPDATE_SUCCESS);
     }

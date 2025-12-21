@@ -20,6 +20,7 @@ public interface PostServ {
     // 查询文章
     Post postSelectById(BigInteger id);
     List<Post> postSelectByTitle(String title);
+    List<Post> postSelectByAuthor(BigInteger authorId);
     List<Post> postSelectByCategory(BigInteger categoryId);
     List<Post> postSelectByLabel(BigInteger labelId);
     List<Post> postSelectAll();
@@ -30,4 +31,5 @@ public interface PostServ {
     List<BigInteger> postIdsByCategory(BigInteger categoryId);
     List<BigInteger> postIdsByLabel(BigInteger labelId);
     List<BigInteger> postIdsByTitle(String title);
+    List<BigInteger> postIdsByAuthor(BigInteger authorId);
 }

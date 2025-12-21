@@ -6,6 +6,7 @@ import cn.civer.blog.Model.Enum.Role;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 public interface UserServ {
     // 用户注册
@@ -18,7 +19,7 @@ public interface UserServ {
     //Result removeByUsername(String username);
     Boolean userRegister(String username, String rawPassword);
     Boolean userUpdateByUser(String username, String password);
-    String userLogin(String username, String rawPassword);
+    Map<String, Object> userLogin(String username, String rawPassword);
     Boolean userLogout(String token);
 
     Boolean userUpdateByAdmin(BigInteger userId, Role role);

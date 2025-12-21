@@ -29,10 +29,10 @@
             <if test="content != null and content != ''">
                 content=#{content},
             </if>
-            <if test="status != null and status != ''">
+            <if test="status != null">
                 status=#{status},
             </if>
-                update_time=NOW()
+            update_time=NOW()
         WHERE id=#{id}
     </update>
     <delete id="deleteByIds">

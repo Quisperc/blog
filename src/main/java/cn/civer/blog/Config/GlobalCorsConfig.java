@@ -18,9 +18,10 @@ public class GlobalCorsConfig {
         CorsConfiguration config = new CorsConfiguration();
         config.setAllowCredentials(true); // 允许携带 Cookie
         config.addAllowedOrigin("http://localhost:8099"); // 前端地址
-        config.addAllowedOrigin("http://localhost:5174");
+        config.addAllowedOrigin("http://localhost:3000");
         config.addAllowedHeader("*");    // 允许所有请求头
         config.addAllowedMethod("*");    // 允许所有请求方法
+        config.addExposedHeader("Authorization"); // 允许暴露Authorization头
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
