@@ -3,7 +3,7 @@ package cn.civer.blog.Utils;
 import cn.civer.blog.Config.Properties.JwtProperties;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
-import lombok.Data;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,13 +15,20 @@ import java.util.Map;
 
 @Slf4j
 @Component
-@Data
-// @ConfigurationProperties(prefix = "jwt")
 public class JwtTokenProvider {
-    private static JwtProperties jwtProperties;
+
     @Autowired
-    public void setJwtProperties(JwtProperties jwtProperties) {
-        JwtTokenProvider.jwtProperties = jwtProperties; // 注入时写入静态字段
+    private JwtProperties jwtProperties;
+
+    private static JwtTokenProvider instance;
+
+    @PostConstruct
+    public void init() {
+        instance = this;
+    }
+
+    private static JwtTokenProvider getInstance() {
+        return instance;
     }
     /**
      * 生成JwtToken
@@ -30,30 +37,25 @@ public class JwtTokenProvider {
      * @param Claims 验证声明
      * @return 生成的token
      */
-    public static String generateToken(BigInteger userID, String username, List arrayList, Map<String, Object> Claims){
-        JwtBuilder builder = Jwts.builder()
-                .signWith(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes()), SignatureAlgorithm.HS256) // 签名
-                .setExpiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs())) // 过期时间
-                .claim("username",username) // 声明username
-                .claim("roles",arrayList)
-                .setSubject(String.valueOf(userID)) // 主题：用户ID
-                .setIssuedAt(new Date());            // 签发时间：现在
-        return builder.compact();
+    public static String generateToken(BigInteger userID, String username, List<?> arrayList, Map<String, Object> claims) {
+        JwtProperties props = getInstance().jwtProperties;
+        return Jwts.builder()
+                .signWith(Keys.hmacShaKeyFor(props.getSecret().getBytes()), SignatureAlgorithm.HS256)
+                .setExpiration(new Date(System.currentTimeMillis() + props.getExpirationMs()))
+                .claim("username", username)
+                .claim("roles", arrayList)
+                .setSubject(String.valueOf(userID))
+                .setIssuedAt(new Date())
+                .compact();
     }
 
-
-    /**
-     * 获取声明解析结果
-     * @param Token jwt token
-     * @return
-     */
-    public static Claims parserToken(String Token){
-        // 新版0.12的jwt解析器
+    public static Claims parserToken(String token) {
+        JwtProperties props = getInstance().jwtProperties;
         return Jwts.parserBuilder()
-                .setSigningKey(Keys.hmacShaKeyFor(jwtProperties.getSecret().getBytes())) // 用secret解密
+                .setSigningKey(Keys.hmacShaKeyFor(props.getSecret().getBytes()))
                 .build()
-                .parseClaimsJws(Token) // 解析jwt
-                .getBody(); // 获取所有声明
+                .parseClaimsJws(token)
+                .getBody();
     }
 
     /**

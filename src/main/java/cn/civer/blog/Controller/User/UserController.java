@@ -8,6 +8,8 @@ import cn.civer.blog.Utils.ObsUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -16,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -24,12 +27,15 @@ import java.util.Map;
 @Slf4j
 @RestController
 @RequestMapping("/api/user")
+@Validated
 public class UserController {
     @Autowired
     private UserServ userServ;
+
     @PostMapping("/login")
-    public ResponseEntity<Result<?>> userLogin(@RequestParam("username") String username,
-                            @RequestParam("password") String password){
+    public ResponseEntity<Result<?>> userLogin(
+            @RequestParam("username") @NotBlank(message = "用户名不能为空") @Size(min = 3, max = 50, message = "用户名长度必须在3-50之间") String username,
+            @RequestParam("password") @NotBlank(message = "密码不能为空") @Size(min = 6, max = 100, message = "密码长度必须在6-100之间") String password) {
         // 1️⃣ 调用 Service 登录，返回 Map 包含 token 和用户数据
         Map<String, Object> result = userServ.userLogin(username, password);
 
@@ -54,17 +60,19 @@ public class UserController {
     }
 
     @PostMapping("/register")
-    public Result userRegister(@RequestParam("username") String username,
-                               @RequestParam("password") String password){
-        userServ.userRegister(username,password);
+    public Result userRegister(
+            @RequestParam("username") @NotBlank(message = "用户名不能为空") @Size(min = 3, max = 50, message = "用户名长度必须在3-50之间") String username,
+            @RequestParam("password") @NotBlank(message = "密码不能为空") @Size(min = 6, max = 100, message = "密码长度必须在6-100之间") String password) {
+        userServ.userRegister(username, password);
         return Result.success(MessageConstants.USER_INSERT_SUCCESS);
     }
 
     @PreAuthorize("hasRole('viewer')")
     @PutMapping("/update")
-    public Result userUpdateByUser(@RequestParam("username") String username,
-                                   @RequestParam("password") String password){
-        userServ.userUpdateByUser(username,password);
+    public Result userUpdateByUser(
+            @RequestParam(value = "username", required = false) @Size(min = 3, max = 50, message = "用户名长度必须在3-50之间") String username,
+            @RequestParam(value = "password", required = false) @Size(min = 6, max = 100, message = "密码长度必须在6-100之间") String password) {
+        userServ.userUpdateByUser(username, password);
         return Result.success(MessageConstants.USER_UPDATE_SUCCESS);
     }
 
