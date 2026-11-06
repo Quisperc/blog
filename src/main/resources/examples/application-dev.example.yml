@@ -1,0 +1,90 @@
+server:
+  port: 8099
+spring:
+  cache:
+    type: redis
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://1.95.148.15:13306/demo_blog
+    username: 2wwi4xW9EvVvAmB.blog
+    password: 4nczThtXeRmTyRCN
+
+  data:
+    redis:
+      host: 1.95.148.15
+      port: 16379
+      password: redis_kdNHc2 # 如果有密码
+      database: 0
+      timeout: 5000
+      username: default
+      lettuce:
+        pool:
+          max-idle: 16
+          max-active: 32
+          min-idle: 8
+
+  servlet:
+    multipart:
+      max-file-size: 500MB       # 单个文件最大 100MB
+      max-request-size: 500MB    # 单次请求最大 100MB
+  mvc:
+    async:
+      request-timeout:
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml  # XML映射文件位置
+  type-aliases-package: cn.civer.blog.Model.Entity  # 实体类包路径
+  configuration:
+    map-underscore-to-camel-case: true  # 自动下划线转驼峰
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 日志输出
+jwt:
+  secret: superkeycivercnquisperuuuurepsi2312uqncrevic
+  expiration-ms: 86400000 # 24 hours
+
+# 异步线程池 配置
+async:
+  pool:
+    core-size: 4
+    max-size: 8
+    queue-capacity: 100
+# 华为云OBS
+huawei:
+  obs:
+    endpoint: obs.cn-east-3.myhuaweicloud.com
+    accessKey: HPUAFYMI5N3ZNUEOZOIT
+    secretAccessKey: Pg2T7W4e1YcRLr4hb0fpQlnlEwYClFUYUvxMR6hk
+    bucketName: cdemo
+    expiration: 60
+    accessUrl: cdemo.civer.cn
+
+# 前端地址
+frontendUrl: https://demo.civer.cn
+# api地址
+apiUrl: https://demoblogapi.civer.cn
+
+logging:
+  level:
+    cn.civer.blog: Debug
+    org.springframework.security: DEBUG
+    org.springframework.cache: TRACE
+springdoc:
+  api-docs:
+    enabled: true # 开启OpenApi接口
+    path: /v3/api-docs  # 自定义路径，默认为 "/v3/api-docs"
+  swagger-ui:
+    enabled: true # 开启swagger界面，依赖OpenApi，需要OpenApi同时开启
+    path: /swagger-ui.html # 自定义路径，默认为"/swagger-ui/index.html"
+    persistAuthorization: true
+    with-credentials: true
+  packages-to-scan: cn.civer.blog.Controller
+
+# TODO.1 回传消息记得转json
+# 2 增加 管理员 查看 所有用户 的控制类、服务类、DTO
+# 3 移除分类与标签的 summary 字段
+# TODO.3 增加 Redis 缓存 各类数据（持续优化方向
+# TODO.4 结合 多线程 操作
+# TODO.5 增加 RabbitMQ 消息队列处理
+# TODO.6 增加 OAuth 登录
+# TODO.7 增加 邮件 处理
+# TODO.8 开发 前端
+# TODO.9 优化 后端缓存 浏览和点赞

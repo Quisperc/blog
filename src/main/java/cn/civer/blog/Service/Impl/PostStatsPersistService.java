@@ -55,13 +55,13 @@ public class PostStatsPersistService {
                 BigInteger postId = new BigInteger(member);
                 int updated = 0;
                 if (isViews) {
-                    updated = postMapper.updateViewsBy(postId, delta);
+                    updated = postMapper.incrementViewsBy(postId, delta);
                 } else {
-                    updated = postMapper.updateLikesBy(postId, delta);
+                    updated = postMapper.incrementLikesBy(postId, delta);
                 }
                 if (updated > 0) {
                     // 从 zset 中减去已落盘的增量，保留并发期间新增的值
-//                    redisUtils.increZSetScore(key, member, -delta);
+                    redisUtils.increZSetScore(key, member, -delta);
                     // log.info("已落盘 {}: postId={}, delta={}, rows={}", key, member, delta, updated);
                 } else {
                     // log.warn("数据库未更新 {}: postId={}, delta={}", key, member, delta);

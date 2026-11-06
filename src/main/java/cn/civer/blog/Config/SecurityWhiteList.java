@@ -13,6 +13,8 @@ public class SecurityWhiteList {
         "/api/label/**",
         "/api/admin/label/**",
         "/api/admin/category/**",
+        "/api/file/**",
+            "/actuator/health",
 
         // Swagger
         "/v3/api-docs/**",

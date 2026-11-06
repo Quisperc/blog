@@ -1,0 +1,33 @@
+server:
+  port: 8099
+spring:
+  cache:
+    type: redis
+  profiles:
+    active: prod
+  servlet:
+    multipart:
+      max-file-size: 500MB       # 单个文件最大 100MB
+      max-request-size: 500MB    # 单次请求最大 100MB
+  mvc:
+    async:
+      request-timeout:
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml  # XML映射文件位置
+  type-aliases-package: cn.civer.blog.Model.Entity  # 实体类包路径
+  configuration:
+    map-underscore-to-camel-case: true  # 自动下划线转驼峰
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 日志输出
+
+# 异步线程池 配置
+async:
+  pool:
+    core-size: 4
+    max-size: 8
+    queue-capacity: 100
+
+# 前端地址
+frontendUrl: https://demo.civer.cn
+# api地址
+apiUrl: https://demoblogapi.civer.cn

@@ -1,0 +1,74 @@
+server:
+  port: 8099
+spring:
+  cache:
+    type: redis
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://1Panel-mysql-StGG/demo_blog
+    username: 2wwi4xW9EvVvAmB.blog
+    password: 4nczThtXeRmTyRCN
+
+  data:
+    redis:
+      host: 1Panel-redis-ghWF
+      port: 6379
+      password: redis_kdNHc2 # 如果有密码
+      database: 0
+      timeout: 5000
+      username: default
+      lettuce:
+        pool:
+          max-idle: 16
+          max-active: 32
+          min-idle: 8
+
+  servlet:
+    multipart:
+      max-file-size: 500MB       # 单个文件最大 100MB
+      max-request-size: 500MB    # 单次请求最大 100MB
+  mvc:
+    async:
+      request-timeout:
+# MyBatis配置
+mybatis:
+  mapper-locations: classpath:mapper/*.xml  # XML映射文件位置
+  type-aliases-package: cn.civer.blog.Model.Entity  # 实体类包路径
+  configuration:
+    map-underscore-to-camel-case: true  # 自动下划线转驼峰
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl  # 日志输出
+jwt:
+  secret: superkeycivercnquisperuuuurepsi2312uqncrevic
+  expiration-ms: 86400000 # 24 hours
+
+# 异步线程池 配置
+async:
+  pool:
+    core-size: 4
+    max-size: 8
+    queue-capacity: 100
+# 华为云OBS
+huawei:
+  obs:
+    endpoint: obs.cn-east-3.myhuaweicloud.com
+    accessKey: HPUAFYMI5N3ZNUEOZOIT
+    secretAccessKey: Pg2T7W4e1YcRLr4hb0fpQlnlEwYClFUYUvxMR6hk
+    bucketName: cdemo
+    expiration: 60
+    accessUrl: cdemo.civer.cn
+
+# 前端地址
+frontendUrl: https://demo.civer.cn
+# api地址
+apiUrl: https://demoblogapi.civer.cn
+
+# 生产环境不允许swagger
+springdoc:
+  api-docs:
+    enabled: false # 关闭OpenApi接口
+  swagger-ui:
+    enabled: false # 关闭swagger界面，依赖OpenApi，需要OpenApi同时开启
+# 生产环境可以使用INFO级别减少日志量
+logging:
+  level:
+    cn.civer.blog: INFO

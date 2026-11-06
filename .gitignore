@@ -31,4 +31,20 @@ build/
 
 ### VS Code ###
 .vscode/
-/frontend/
+
+# 环境变量文件
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# 忽略前端构建目录，但不忽略源代码
+/frontend/node_modules/
+/frontend/build/
+/frontend/.env*
+!/frontend/.env.example
+# 真实环境配置（含密钥，不入库）
+src/main/resources/application*.yml
+!src/main/resources/examples/
+!.env.example
